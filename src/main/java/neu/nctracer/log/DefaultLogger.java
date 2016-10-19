@@ -5,12 +5,16 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
-import neu.nctracer.exception.ConfigurationException;
-
-class DefaultLogger implements GenericLogger {
+/**
+ * Default logger implementation for {@linkplain neu.nctracer.log.Logger}
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
+class DefaultLogger implements neu.nctracer.log.Logger {
     private Logger logger;
 
-    DefaultLogger(URL url) throws ConfigurationException {
+    DefaultLogger(URL url) {
         DOMConfigurator.configure(url);
         logger = Logger.getLogger(DefaultLogger.class);
     }

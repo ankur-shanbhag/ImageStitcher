@@ -1,6 +1,8 @@
 package neu.nctracer.exception;
 
-public class HdfsException extends Exception {
+import java.io.IOException;
+
+public class HdfsException extends IOException {
 
 	private static final long serialVersionUID = 83247912381273L;
 

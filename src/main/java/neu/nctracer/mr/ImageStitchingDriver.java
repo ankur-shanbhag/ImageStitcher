@@ -17,8 +17,15 @@ import neu.nctracer.conf.ConfigurationManager;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.InvalidConfigKeyException;
+import neu.nctracer.log.LogManager;
+import neu.nctracer.log.Logger;
 import neu.nctracer.utils.HdfsFileUtils;
 
+/**
+ * MapReduce implementation for stitching 2 image stacks.
+ * 
+ * @author Ankur Shanbhag
+ */
 public class ImageStitchingDriver implements ImageStitcher {
 
     private Configuration conf;
@@ -32,7 +39,9 @@ public class ImageStitchingDriver implements ImageStitcher {
     private String hdfsSourceImage = null;
     private String hdfsTargetImage = null;
     private String threshold = null;
-
+    
+    private Logger logger = LogManager.getLogManager().getDefaultLogger();
+    
     public void setup(Configuration conf, String localInputPath, String localOutputPath)
             throws HdfsException {
         this.conf = conf;
@@ -42,68 +51,76 @@ public class ImageStitchingDriver implements ImageStitcher {
         try {
             ConfigurationManager handler = ConfigurationManager.getConfigurationManager();
 
-            String deleteOutputDir = handler
-                    .getConfig(ConfigurationConstants.DELETE_HDFS_DIRS);
+            hdfsSourceImage = handler.getConfig(ConfigurationConstants.HDFS_SOURCE_IMAGE_PATH);
+            hdfsTargetImage = handler.getConfig(ConfigurationConstants.HDFS_TARGET_IMAGE_FILE);
+            threshold = handler.getConfig(ConfigurationConstants.ERROR_THRESHOLD);
 
             hdfsInputPath = handler.getConfig(ConfigurationConstants.HDFS_INPUT_DIR);
             hdfsOutputPath = handler.getConfig(ConfigurationConstants.HDFS_OUTPUT_DIR);
 
+            String localSourceImage = handler.getConfig(ConfigurationConstants.LOCAL_SOURCE_IMAGE_FILE);
+            String localTargetImage = handler.getConfig(ConfigurationConstants.LOCAL_TARGET_IMAGE_FILE);
+
+            String deleteOutputDir = handler.getConfig(ConfigurationConstants.DELETE_HDFS_DIRS);
             if (Boolean.valueOf(deleteOutputDir)) {
-                // TODO: Check if deletion fails
+                logger.debug("Deleting HDFS files and directories.");
                 HdfsFileUtils.delete(hdfsInputPath, true, conf);
                 HdfsFileUtils.delete(hdfsOutputPath, true, conf);
+                HdfsFileUtils.delete(hdfsSourceImage, false, conf);
+                HdfsFileUtils.delete(hdfsTargetImage, false, conf);
+                logger.info("Successfully deleted all HDFS files and directories.");
             }
 
+            logger.debug("Deleting HDFS files and directories.");
             HdfsFileUtils.copyFromLocal(inputPath, hdfsInputPath, conf);
-
-            String localSourceImage = handler
-                    .getConfig(ConfigurationConstants.LOCAL_SOURCE_IMAGE_FILE);
-            hdfsSourceImage = handler.getConfig(ConfigurationConstants.HDFS_SOURCE_IMAGE_PATH);
-
-            HdfsFileUtils.copyFromLocal(localSourceImage, hdfsSourceImage, conf);
-
-            String localTargetImage = handler
-                    .getConfig(ConfigurationConstants.LOCAL_TARGET_IMAGE_FILE);
-            hdfsTargetImage = handler.getConfig(ConfigurationConstants.HDFS_TARGET_IMAGE_FILE);
-
             HdfsFileUtils.copyFromLocal(localTargetImage, hdfsTargetImage, conf);
-
-            threshold = handler.getConfig(ConfigurationConstants.ERROR_THRESHOLD);
-
+            HdfsFileUtils.copyFromLocal(localSourceImage, hdfsSourceImage, conf);
+            
+            logger.info("Image stitching job setup successful.");
         } catch (InvalidConfigKeyException e) {
+            logger.error("Cannot find Hadoop job parameters.", e);
             throw new HdfsException("Cannot find Hadoop job parameters.", e);
         } catch (ConfigurationException e) {
+            logger.error("Cannot find Hadoop job parameters.", e);
             throw new HdfsException("Cannot find Hadoop job parameters.", e);
+        } catch (HdfsException e){
+            logger.error("Error performing HDFS file operation.", e);
+            throw e;
         }
     }
 
     public boolean run() throws HdfsException {
 
         try {
-            Job job = Job.getInstance(conf, "Image Stiching Driver");
+            Job job = Job.getInstance(conf, ImageStitchingDriver.class.getSimpleName());
             job.setJarByClass(ImageStitchingDriver.class);
             job.setMapperClass(ImageDataClusteringMapper.class);
 
-            job.setInputFormatClass(NLineInputFormat.class);
-
-            NLineInputFormat.addInputPath(job, new Path(hdfsInputPath));
             job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
-
             job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImage);
             job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImage);
-
             job.getConfiguration().set(HdfsConstants.IMAGE_MATCHING_ERROR, threshold);
 
             addJarToDistributedCache(job);
 
+            NLineInputFormat.addInputPath(job, new Path(hdfsInputPath));
+            job.setInputFormatClass(NLineInputFormat.class);
             job.setNumReduceTasks(0);
-
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(NullWritable.class);
 
             FileOutputFormat.setOutputPath(job, new Path(hdfsOutputPath));
 
-            return job.waitForCompletion(true);
+            logger.info("Starting mapreduce job to perform image stitching operation.");
+            boolean status = job.waitForCompletion(true);
+            if (status) {
+                logger.info("Mapreduce job completed successfully.");
+                HdfsFileUtils.copyToLocal(hdfsOutputPath, outputPath, conf);
+                logger.debug("HDFS output files copied to local file system");
+            } else {
+                logger.error("Mapreduce job completed with errors. Check hadoop logs for details.");
+            }
+            return status;
         } catch (IOException e) {
             throw new HdfsException(e.getMessage(), e);
         } catch (ClassNotFoundException e) {
@@ -113,9 +130,16 @@ public class ImageStitchingDriver implements ImageStitcher {
         }
     }
 
+    /**
+     * Add all the dependent jar files to distributed cache
+     * 
+     * @param job
+     * @throws IOException
+     * @throws HdfsException
+     */
     private void addJarToDistributedCache(Job job)
             throws IOException, HdfsException {
-
+        logger.debug("Adding all the dependent jar files to distributed cache.");
         try {
             ConfigurationManager handler = ConfigurationManager.getConfigurationManager();
             String projectHome = handler.getConfig(ConfigurationConstants.PROJECT_BASE_DIR);
@@ -124,8 +148,10 @@ public class ImageStitchingDriver implements ImageStitcher {
             FileSystem fs = FileSystem.getLocal(conf);
 
             String localJars = cacheLocalJars(projectHome, fs);
-            if (null == localJars || localJars.isEmpty())
+            if (null == localJars || localJars.isEmpty()) {
+                logger.warn("No local dependent jar files found.");
                 return;
+            }
 
             final String hadoopTmpJars = "tmpjars";
             String tmpJars = (null == conf.get(hadoopTmpJars)) ? localJars
@@ -137,6 +163,7 @@ public class ImageStitchingDriver implements ImageStitcher {
         } catch (InvalidConfigKeyException e) {
             throw new HdfsException(e.getMessage(), e);
         }
+        logger.debug("Dependent jar files added successfully.");
     }
 
     private String cacheLocalJars(String projectHome, FileSystem fs) {

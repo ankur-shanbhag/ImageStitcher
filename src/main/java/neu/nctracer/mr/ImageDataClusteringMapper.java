@@ -14,6 +14,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import neu.nctracer.data.DataObject;
+import neu.nctracer.data.ImageData;
 import neu.nctracer.dm.cluster.Clusterer;
 import neu.nctracer.dm.cluster.DBSCANCluster;
 import neu.nctracer.exception.DataParsingException;
@@ -43,11 +44,11 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
             String sourceFileData = HdfsFileUtils.readFileAsString(conf,
                                                                    conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH));
-            sourceImageData = DataParser.parseImageData(sourceFileData);
+            sourceImageData = DataParser.parseImageData(sourceFileData, ImageData.class);
 
             String targetFileData = HdfsFileUtils.readFileAsString(conf,
                                                                    conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH));
-            targetImageData = DataParser.parseImageData(targetFileData);
+            targetImageData = DataParser.parseImageData(targetFileData, ImageData.class);
 
         } catch (HdfsException e) {
             throw new IOException("Error while reading image data.", e);

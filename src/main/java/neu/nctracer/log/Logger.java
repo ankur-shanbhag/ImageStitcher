@@ -1,6 +1,11 @@
 package neu.nctracer.log;
 
-public interface GenericLogger {
+/**
+ * Interface to be implemented by all the custom logger classes
+ * 
+ * @author Ankur Shanbhag
+ */
+public interface Logger {
 
     void debug(String message);
 

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import neu.nctracer.data.DataObject;
-import neu.nctracer.data.ImageData;
 import neu.nctracer.exception.DataParsingException;
 
 public final class DataParser {
@@ -12,12 +11,16 @@ public final class DataParser {
     private static final String WHITE_SPACE_RECORD_SPLITTER = "\\s+";
     private static final String LINE_SPLITTER = "\\r?\\n";
 
-    public static Collection<DataObject> parseImageData(String data) throws DataParsingException {
-        return parseImageData(data, WHITE_SPACE_RECORD_SPLITTER);
+    public static Collection<DataObject> parseImageData(String data,
+                                                        Class<? extends DataObject> clazz)
+                                                        throws DataParsingException {
+        return parseImageData(data, WHITE_SPACE_RECORD_SPLITTER, clazz);
     }
 
-    public static Collection<DataObject> parseImageData(String data, String recordSplitter)
-            throws DataParsingException {
+    public static Collection<DataObject> parseImageData(String data,
+                                                        String recordSplitter,
+                                                        Class<? extends DataObject> clazz)
+                                                        throws DataParsingException {
         Collection<DataObject> parsedData = new ArrayList<>();
         String[] lines = data.split(LINE_SPLITTER);
         for (String line : lines) {
@@ -30,10 +33,18 @@ public final class DataParser {
                         features[i] = Double.parseDouble(values[i]);
                     }
 
-                    parsedData.add(new ImageData(features));
+                    DataObject dataObj = clazz.newInstance();
+                    dataObj.setFeatures(features);
+                    parsedData.add(dataObj);
                 }
             } catch (NumberFormatException exp) {
                 throw new DataParsingException("Error while parsing record [" + line + "]", exp);
+            } catch (InstantiationException e) {
+                throw new DataParsingException(
+                        "Error instantiating class [" + clazz.getName() + "]", e);
+            } catch (IllegalAccessException e) {
+                throw new DataParsingException(
+                        "Error instantiating class [" + clazz.getName() + "]", e);
             }
         }
         return parsedData;

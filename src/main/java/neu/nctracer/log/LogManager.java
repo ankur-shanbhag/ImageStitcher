@@ -2,37 +2,34 @@ package neu.nctracer.log;
 
 import java.net.URL;
 
-import neu.nctracer.conf.ConfigurationManager;
-import neu.nctracer.exception.ConfigurationException;
-
+/**
+ * This class is responsible to provide default logger for all other classes.
+ * Provides single point of control to configure default logger for the project.
+ * <br>
+ * Usage: <code>LogManager.getLogManager().getDefaultLogger()</code>
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class LogManager {
 
-    private static LogManager logManager;
+    private static LogManager logManager = new LogManager();
+    private Logger logger;
 
-    private GenericLogger logger;
-
-    private LogManager() throws ConfigurationException {
-        URL url = ConfigurationManager.class.getResource("/log4j.xml");
+    private LogManager() {
+        URL url = LogManager.class.getResource("/log4j.xml");
         logger = new DefaultLogger(url);
     }
 
-    public static LogManager getLogManager() throws ConfigurationException {
-        if (null == logManager) {
-            synchronized (LogManager.class) {
-                // double checked locking to ensure single instance is created
-                if (null == logManager)
-                    logManager = new LogManager();
-            }
-        }
-
+    public static LogManager getLogManager() {
         return logManager;
     }
 
-    public void setDefaultLogger(GenericLogger logger) {
+    public void setDefaultLogger(Logger logger) {
         this.logger = logger;
     }
 
-    public GenericLogger getDefaultLogger() {
+    public Logger getDefaultLogger() {
         return logger;
     }
 }

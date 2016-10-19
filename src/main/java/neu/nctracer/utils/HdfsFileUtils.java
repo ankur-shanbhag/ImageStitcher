@@ -14,6 +14,13 @@ import org.apache.hadoop.io.Text;
 
 import neu.nctracer.exception.HdfsException;
 
+/**
+ * Utility class to perform HDFS I/O operation such as read, write, copy, delete
+ * etc.
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public final class HdfsFileUtils {
 
     public static String readFileAsString(Configuration conf, String filePath)
@@ -32,7 +39,6 @@ public final class HdfsFileUtils {
 
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             IOUtils.copyBytes(in, bytes, conf, false);
-
             return bytes.toByteArray();
 
         } catch (IOException e) {
@@ -75,7 +81,6 @@ public final class HdfsFileUtils {
                                      String hdfsDirPath,
                                      Configuration conf)
             throws HdfsException {
-
         try {
             FileSystem fs = FileSystem.get(URI.create(hdfsDirPath), conf);
 
@@ -83,6 +88,23 @@ public final class HdfsFileUtils {
                 throw new HdfsException("Error deleting destination path.");
 
             fs.copyFromLocalFile(false, true, new Path(localDirPath), new Path(hdfsDirPath));
+        } catch (IOException e) {
+            throw new HdfsException("Error while copying local files to HDFS.", e);
+        }
+    }
+
+    public static void copyToLocal(String hdfsPath, String localPath, Configuration conf) throws HdfsException {
+        try {
+            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
+
+            Path srcPath = new Path(hdfsPath);
+            Path dstPath = new Path(localPath);
+            if (!fs.exists(srcPath))
+                throw new HdfsException("Hdfs path [" 
+                                        + hdfsPath
+                                        + "] does not exist. Cannot perform copy to local.");
+
+            fs.copyToLocalFile(srcPath, dstPath);
         } catch (IOException e) {
             throw new HdfsException("Error while copying local files to HDFS.", e);
         }

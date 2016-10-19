@@ -2,12 +2,19 @@ package neu.nctracer.data;
 
 import java.util.Arrays;
 
+/**
+ * Class to hold image data
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class ImageData implements DataObject {
 
     private double[] features;
     private int dimension;
 
-    public ImageData(double[] features) {
+    @Override
+    public void setFeatures(double[] features) {
         this.features = features;
         this.dimension = features.length;
     }

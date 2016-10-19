@@ -1,25 +1,41 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-<log4j:configuration debug="true" xmlns:log4j='http://jakarta.apache.org/log4j/'>
- 
-  <appender name="console" class="org.apache.log4j.ConsoleAppender">
-    <param name="Target" value="System.out"/>
-    <layout class="org.apache.log4j.PatternLayout">
-    <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
-    </layout>
-  </appender>
- 
-  <appender name="fileAppender" class="org.apache.log4j.RollingFileAppender">
-    <param name="File" value="${log.output.dir}/test.log"/>
-    <layout class="org.apache.log4j.PatternLayout">
-    <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
-    </layout>
-  </appender>
- 
-  <root>
-    <priority value ="debug"></priority>
-    <appender-ref ref="console"/>
-    <appender-ref ref="fileAppender"/>
-	<!--  </appender> -->
-  </root>
- 
+<log4j:configuration debug="true"
+    xmlns:log4j='http://jakarta.apache.org/log4j/'>
+
+    <appender name="imageStitcherConsoleAppender" class="org.apache.log4j.ConsoleAppender">
+        <param name="Threshold" value="INFO" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="imageStitcherFileAppender" class="org.apache.log4j.RollingFileAppender">
+        <param name="File" value="${log.output.dir}/image-stitcher.log" />
+        <param name="Threshold" value="DEBUG" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="allLogsFileAppender" class="org.apache.log4j.RollingFileAppender">
+        <param name="File" value="${log.output.dir}/image-stitcher-all.log" />
+        <param name="Threshold" value="TRACE" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
+        </layout>
+    </appender>
+
+    <!-- Log ImageStitcher specific logs -->
+    <logger name="neu.nctracer">
+        <appender-ref ref="imageStitcherConsoleAppender" />
+        <appender-ref ref="imageStitcherFileAppender" />
+    </logger>
+
+    <!-- Redirect all non-project specific logs to a separate file -->
+    <root>
+        <priority value="DEBUG"></priority>
+        <appender-ref ref="allLogsFileAppender" />
+    </root>
+
 </log4j:configuration>
+
