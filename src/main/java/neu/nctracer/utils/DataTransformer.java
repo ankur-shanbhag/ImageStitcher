@@ -1,10 +1,12 @@
 package neu.nctracer.utils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import neu.nctracer.data.DataObject;
-import neu.nctracer.exception.ConfigurationException;
 
 /**
  * Class to perform statistical analysis such mean, distance etc. on
@@ -13,7 +15,7 @@ import neu.nctracer.exception.ConfigurationException;
  * @author Ankur Shanbhag
  *
  */
-public class DataAnalyser {
+public class DataTransformer {
 
     public static double[] computeArithmeticMean(Collection<DataObject> points) {
         if (null == points)
@@ -86,22 +88,37 @@ public class DataAnalyser {
         return angles;
     }
 
-    private DataAnalyser() {
+    public static double[] computeRelativePosition(DataObject point1, DataObject point2) {
+        double[] movement = new double[point1.getDimension()];
+        double[] features1 = point1.getFeatures();
+        double[] features2 = point2.getFeatures();
+        for (int i = 0; i < point1.getDimension(); i++) {
+            movement[i] = features1[i] - features2[i];
+        }
+        return movement;
     }
 
-    public static void main(String args[]) throws ConfigurationException {
+    public static Map<DataObject, double[]> doTranslation(DataObject anchorPoint,
+                                                          Map<DataObject, double[]> relativeMovementMap) {
+        Map<DataObject, double[]> movedObjects = new HashMap<>();
+        for (Entry<DataObject, double[]> entry : relativeMovementMap.entrySet()) {
+            DataObject point = entry.getKey();
+            movedObjects.put(point, doTranslation(anchorPoint, entry.getValue()));
+        }
+        return movedObjects;
+    }
 
-        // System.out.println("Hello world");
-        // double[] arr1 = { 2, 4, 4 };
-        // double[] arr2 = { 1, 6, 2 };
-        //
-        // System.out.println(Arrays
-        // .toString(computeDirectionAngles(new ImageData(arr1), new
-        // ImageData(arr2))));
-        //
-        // System.out.println(Arrays
-        // .toString(computeDirectionAngles(new ImageData(arr2), new
-        // ImageData(arr1))));
+    public static double[] doTranslation(DataObject point,
+                                         double[] movement) {
+        double translatedObj[] = new double[point.getDimension()];
+        double[] features = point.getFeatures();
+        for (int i = 0; i < point.getDimension(); i++) {
+            translatedObj[i] = features[i] + movement[i];
+        }
+        return translatedObj;
+    }
 
+    private DataTransformer() {
+        // Deny object creation
     }
 }

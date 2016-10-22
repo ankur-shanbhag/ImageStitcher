@@ -1,5 +1,5 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-<log4j:configuration debug="true"
+<log4j:configuration
     xmlns:log4j='http://jakarta.apache.org/log4j/'>
 
     <appender name="imageStitcherConsoleAppender" class="org.apache.log4j.ConsoleAppender">
@@ -10,7 +10,7 @@
     </appender>
 
     <appender name="imageStitcherFileAppender" class="org.apache.log4j.RollingFileAppender">
-        <param name="File" value="${log.output.dir}/image-stitcher.log" />
+        <param name="File" value="${local.log.output.dir}/image-stitcher.log" />
         <param name="Threshold" value="DEBUG" />
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
@@ -18,7 +18,7 @@
     </appender>
 
     <appender name="allLogsFileAppender" class="org.apache.log4j.RollingFileAppender">
-        <param name="File" value="${log.output.dir}/image-stitcher-all.log" />
+        <param name="File" value="${local.log.output.dir}/image-stitcher-all.log" />
         <param name="Threshold" value="TRACE" />
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n" />
@@ -38,4 +38,3 @@
     </root>
 
 </log4j:configuration>
-

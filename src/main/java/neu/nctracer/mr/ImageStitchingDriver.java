@@ -158,12 +158,12 @@ public class ImageStitchingDriver implements ImageStitcher {
                     : conf.get(hadoopTmpJars) + "," + localJars;
 
             conf.set(hadoopTmpJars, tmpJars);
+            logger.debug("Dependent jar files added successfully. [" + localJars + "]");
         } catch (ConfigurationException e) {
             throw new HdfsException(e.getMessage(), e);
         } catch (InvalidConfigKeyException e) {
             throw new HdfsException(e.getMessage(), e);
         }
-        logger.debug("Dependent jar files added successfully.");
     }
 
     private String cacheLocalJars(String projectHome, FileSystem fs) {

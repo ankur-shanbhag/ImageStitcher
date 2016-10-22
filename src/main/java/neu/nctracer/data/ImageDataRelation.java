@@ -2,7 +2,7 @@ package neu.nctracer.data;
 
 import java.util.Arrays;
 
-import neu.nctracer.utils.DataAnalyser;
+import neu.nctracer.utils.DataTransformer;
 
 public class ImageDataRelation implements DataObjectRelation {
 
@@ -19,8 +19,8 @@ public class ImageDataRelation implements DataObjectRelation {
 
     @Override
     public void computeRelation() {
-        this.distance = DataAnalyser.computeEuclideanDistance(point1, point2);
-        this.angles = DataAnalyser.computeDirectionAngles(point1, point2);
+        this.distance = DataTransformer.computeEuclideanDistance(point1, point2);
+        this.angles = DataTransformer.computeDirectionAngles(point1, point2);
     }
 
     public DataObject getPoint1() {

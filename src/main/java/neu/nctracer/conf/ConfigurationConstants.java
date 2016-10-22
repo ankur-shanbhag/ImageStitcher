@@ -19,6 +19,10 @@ public final class ConfigurationConstants {
     public static final String HDFS_SOURCE_IMAGE_PATH = "hadoop.image.source.file";
     public static final String HDFS_TARGET_IMAGE_FILE = "hadoop.image.target.file";
 
+    public static final String GNUPLOT_PATH = "gnuplot.process.path";
+
+    public static final String GNUPLOT_OUTPUT_PATH = "gnuplot.output.path";
+
     private ConfigurationConstants() {
         // Deny object creation
     }

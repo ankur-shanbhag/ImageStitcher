@@ -19,8 +19,8 @@ import neu.nctracer.dm.cluster.Clusterer;
 import neu.nctracer.dm.cluster.DBSCANCluster;
 import neu.nctracer.exception.DataParsingException;
 import neu.nctracer.exception.HdfsException;
-import neu.nctracer.utils.DataAnalyser;
 import neu.nctracer.utils.DataParser;
+import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
 
 public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
@@ -34,7 +34,8 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     @Override
     protected void setup(Mapper<LongWritable, Text, Text, NullWritable>.Context context)
-            throws IOException, InterruptedException {
+            throws IOException,
+            InterruptedException {
         super.setup(context);
 
         try {
@@ -59,7 +60,8 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     @Override
     public void map(LongWritable key, Text value, Context context)
-            throws IOException, InterruptedException {
+            throws IOException,
+            InterruptedException {
 
         String delimiter = context.getConfiguration().get("image.matching.cluster.params.delimiter",
                                                           "\\s*,\\s*");
@@ -70,9 +72,6 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         Clusterer clusterer = new DBSCANCluster(minPoints, eps);
         List<List<DataObject>> sourceClusters = clusterer.createClusters(sourceImageData);
         List<List<DataObject>> targetClusters = clusterer.createClusters(targetImageData);
-
-        int imageWidth = Integer.parseInt(context.getConfiguration().get("image.width", "1000"));
-        int imageHeight = Integer.parseInt(context.getConfiguration().get("image.height", "1500"));
 
         Map<Integer, List<List<DataObject>>> lookup = new HashMap<>();
 
@@ -91,96 +90,39 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
                 List<List<DataObject>> clusters = lookup.get(targetCluster.size());
 
                 for (List<DataObject> sourceCluster : clusters) {
-//                    if (checkIfSimilar(sourceCluster, targetCluster)) {
-                        TEXT_KEY.set(toString(sourceCluster) + "," + toString(targetCluster));
-                        context.write(TEXT_KEY, NullWritable.get());
-//                    }
+                    // if (checkIfSimilar(sourceCluster, targetCluster)) {
+                    TEXT_KEY.set(toString(sourceCluster) + "," + toString(targetCluster));
+                    context.write(TEXT_KEY, NullWritable.get());
+                    // }
                 }
             }
         }
     }
 
     private void checkIfSimilar(Collection<DataObject> sourceCluster,
-                                   Collection<DataObject> targetCluster) {
+                                Collection<DataObject> targetCluster) {
 
-        double[] sourceCenterPoint = DataAnalyser.computeArithmeticMean(sourceCluster);
-        double[] targetCenterPoint = DataAnalyser.computeArithmeticMean(targetCluster);
+        DataObject sourceCenterPoint = new ImageData();
+        sourceCenterPoint.setFeatures(DataTransformer.computeArithmeticMean(sourceCluster));
 
-        
-//        double[] distanceFromSourceCenter = DataAnalyser
-//                .computeEuclideanDistance(new ImageData(sourceCenterPoint),
-//                                          sourceCluster);
-//        double[] distanceFromTargetCenter = DataAnalyser
-//                .computeEuclideanDistance(new ImageData(targetCenterPoint),
-//                                          targetCluster);
-//
-//        Arrays.sort(distanceFromSourceCenter);
-//        Arrays.sort(distanceFromTargetCenter);
-//
-//        for (int i = 0; i < distanceFromSourceCenter.length; i++) {
-//            if (Math.abs(distanceFromSourceCenter[i] - distanceFromTargetCenter[i]) > threshold)
-//                return false;
-//        }
-//
-//        System.out.println("Match found ...");
+        DataObject targetCenterPoint = new ImageData();
+        targetCenterPoint.setFeatures(DataTransformer.computeArithmeticMean(targetCluster));
+
+        Map<DataObject, double[]> relativeMovementMap = relativePositions(sourceCluster,
+                                                                          sourceCenterPoint);
+        Map<DataObject, double[]> translatedPoints = DataTransformer
+                .doTranslation(targetCenterPoint, relativeMovementMap);
     }
 
-    // private boolean checkIfSimilar(List<DataObject> sourceCluster,
-    // List<DataObject> targetCluster) {
-    //
-    // Map<DataObject, List<DataObjectRelation>> sourceRelationMap =
-    // computeRelations(sourceCluster);
-    // Map<DataObject, List<DataObjectRelation>> targetRelationMap =
-    // computeRelations(targetCluster);
-    //
-    // return false;
-    // }
-    //
-    // private void matchDataObjects(List<DataObjectRelation> sourceObjects,
-    // List<DataObjectRelation> targetObjects) {
-    //
-    // for (int i = 0; i < sourceObjects.size(); i++) {
-    // for (int j = 0; j < targetObjects.size(); j++) {
-    // double err = computeErr(sourceObjects.get(i), targetObjects.get(j));
-    // }
-    // }
-    // }
-    //
-    // private double computeErr(DataObjectRelation obj1, DataObjectRelation
-    // obj2) {
-    // double error = (obj1.getDistance() - obj2.getDistance()) * 0.5;
-    //
-    // for (int i = 0; i < obj1.getAngles().length; i++) {
-    // error += obj1.getAngles()[i] - obj2.getAngles()[i];
-    // }
-    //
-    // return error;
-    // }
-    //
-    // private Map<DataObject, List<DataObjectRelation>>
-    // computeRelations(List<DataObject> cluster) {
-    //
-    // Map<DataObject, List<DataObjectRelation>> allNeighborsRelationMap = new
-    // HashMap<>();
-    //
-    // for (int i = 0; i < cluster.size(); i++) {
-    // DataObject dataObject = cluster.get(i);
-    // List<DataObjectRelation> relations = new ArrayList<>();
-    // allNeighborsRelationMap.put(dataObject, relations);
-    //
-    // for (int j = 0; j < cluster.size(); j++) {
-    // if (i == j)
-    // continue;
-    // DataObject neighbor = cluster.get(j);
-    // DataObjectRelation relation = new ImageDataRelation();
-    // relation.setDataObjects(dataObject, neighbor);
-    // relation.computeRelation();
-    // relations.add(relation);
-    // }
-    // }
-    //
-    // return allNeighborsRelationMap;
-    // }
+    private Map<DataObject, double[]> relativePositions(Collection<DataObject> cluster,
+                                                        DataObject centerPoint) {
+        Map<DataObject, double[]> relativeMovementMap = new HashMap<>();
+        for (DataObject point : cluster) {
+            double[] movement = DataTransformer.computeRelativePosition(centerPoint, point);
+            relativeMovementMap.put(point, movement);
+        }
+        return relativeMovementMap;
+    }
 
     private String toString(Collection<DataObject> points) {
         StringBuilder builder = new StringBuilder("[");
