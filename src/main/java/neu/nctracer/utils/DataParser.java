@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import neu.nctracer.data.DataObject;
-import neu.nctracer.exception.DataParsingException;
+import neu.nctracer.exception.ParsingException;
 
 public final class DataParser {
 
@@ -13,23 +13,22 @@ public final class DataParser {
 
     public static Collection<DataObject> parseImageData(String data,
                                                         Class<? extends DataObject> clazz)
-                                                        throws DataParsingException {
+                                                        throws ParsingException {
         return parseImageData(data, WHITE_SPACE_RECORD_SPLITTER, clazz);
     }
 
     public static Collection<DataObject> parseImageData(String data,
                                                         String recordSplitter,
                                                         Class<? extends DataObject> clazz)
-                                                        throws DataParsingException {
+                                                        throws ParsingException {
         Collection<DataObject> parsedData = new ArrayList<>();
         String[] lines = data.split(LINE_SPLITTER);
         for (String line : lines) {
             try {
                 String[] values = line.trim().split(recordSplitter);
                 if (values != null) {
-
-                    double[] features = new double[values.length];
-                    for (int i = 0; i < values.length; i++) {
+                    double[] features = new double[values.length - 1];
+                    for (int i = 0; i < values.length - 1; i++) {
                         features[i] = Double.parseDouble(values[i]);
                     }
 
@@ -38,12 +37,12 @@ public final class DataParser {
                     parsedData.add(dataObj);
                 }
             } catch (NumberFormatException exp) {
-                throw new DataParsingException("Error while parsing record [" + line + "]", exp);
+                throw new ParsingException("Error while parsing record [" + line + "]", exp);
             } catch (InstantiationException e) {
-                throw new DataParsingException(
+                throw new ParsingException(
                         "Error instantiating class [" + clazz.getName() + "]", e);
             } catch (IllegalAccessException e) {
-                throw new DataParsingException(
+                throw new ParsingException(
                         "Error instantiating class [" + clazz.getName() + "]", e);
             }
         }
@@ -54,3 +53,4 @@ public final class DataParser {
         // deny object creation
     }
 }
+

@@ -9,6 +9,8 @@ import org.apache.commons.math3.ml.clustering.Clusterer;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import neu.nctracer.data.DataObject;
+import neu.nctracer.dm.ConfigurationParams;
+import neu.nctracer.exception.ParsingException;
 
 /**
  * Implementation for DBSCAN algorithm for clustering the data points with
@@ -31,18 +33,24 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
     /**
      * maximum radius of the neighborhood
      */
-    private final double eps;
+    private double eps;
 
     /**
      * Minimum number of points in Epsilon neighborhood to consider any point
      * for clustering
      */
-    private final int minPoints;
+    private int minPoints;
 
-    public DBSCANCluster(int minPoints, double eps) {
-        this.minPoints = minPoints;
-
-        this.eps = eps;
+    @Override
+    public void setup(ConfigurationParams params) throws ParsingException {
+        try {
+            this.minPoints = Integer.parseInt(params.getParam("minpoints"));
+            this.eps = Double.parseDouble(params.getParam("eps"));
+        } catch (NumberFormatException nfe) {
+            throw new ParsingException("Error parsing params [minpoints, eps]. Configuration parameters received "
+                                       + params.toString(),
+                                       nfe);
+        }
     }
 
     /**
@@ -55,8 +63,7 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
     public List<List<DataObject>> createClusters(Collection<DataObject> dataPoints) {
 
         if (this.minPoints > dataPoints.size())
-            throw new RuntimeException(
-                    "MinPoints cannot have a value greater than total number of data points");
+            throw new RuntimeException("MinPoints cannot have a value greater than total number of data points");
 
         Clusterer<DataObject> clustering = new DBSCANClusterer<>(this.eps, this.minPoints);
 

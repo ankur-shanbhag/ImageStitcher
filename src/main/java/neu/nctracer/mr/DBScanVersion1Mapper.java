@@ -17,10 +17,12 @@ import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataObjectRelation;
 import neu.nctracer.data.ImageData;
 import neu.nctracer.data.ImageDataRelation;
+import neu.nctracer.dm.ConfigurationParams;
+import neu.nctracer.dm.DMConfigurationHandler;
 import neu.nctracer.dm.cluster.Clusterer;
 import neu.nctracer.dm.cluster.DBSCANCluster;
-import neu.nctracer.exception.DataParsingException;
 import neu.nctracer.exception.HdfsException;
+import neu.nctracer.exception.ParsingException;
 import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.HdfsFileUtils;
 
@@ -33,6 +35,8 @@ public class DBScanVersion1Mapper extends Mapper<LongWritable, Text, Text, NullW
 
     private final Text TEXT_KEY = new Text();
 
+    private DMConfigurationHandler configParamHandler = DMConfigurationHandler.getDMConfigurationHandler();
+    
     @Override
     protected void setup(Mapper<LongWritable, Text, Text, NullWritable>.Context context)
             throws IOException, InterruptedException {
@@ -54,7 +58,7 @@ public class DBScanVersion1Mapper extends Mapper<LongWritable, Text, Text, NullW
         } catch (HdfsException e) {
             System.out.println("Error while reading image data. " + e);
             throw new IOException("Error while reading image data.", e);
-        } catch (DataParsingException e) {
+        } catch (ParsingException e) {
             System.out.println("Error while parsing image data. " + e);
             throw new IOException("Error while parsing image data.", e);
         }
@@ -66,11 +70,16 @@ public class DBScanVersion1Mapper extends Mapper<LongWritable, Text, Text, NullW
 
         String delimiter = context.getConfiguration().get("image.matching.cluster.params.delimiter",
                                                           "\\s*,\\s*");
-        String[] config = value.toString().split(delimiter);
-        int minPoints = Integer.parseInt(config[0]);
-        double eps = Double.parseDouble(config[1]);
+        ConfigurationParams configurationParams = null;
+        Clusterer clusterer = new DBSCANCluster();
+        try {
+            configurationParams = configParamHandler.getConfigurationParamsInstance();
+            configurationParams.parseParams(value.toString(), delimiter);
+            clusterer.setup(configurationParams);
+        } catch (ParsingException e) {
+            throw new HdfsException(e);
+        }
 
-        Clusterer clusterer = new DBSCANCluster(minPoints, eps);
         List<List<DataObject>> sourceClusters = clusterer.createClusters(sourceImageData);
         List<List<DataObject>> targetClusters = clusterer.createClusters(targetImageData);
 
@@ -189,3 +198,4 @@ public class DBScanVersion1Mapper extends Mapper<LongWritable, Text, Text, NullW
         return builder.append("]").toString();
     }
 }
+

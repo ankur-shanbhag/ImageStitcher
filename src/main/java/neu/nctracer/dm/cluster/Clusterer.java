@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 
 import neu.nctracer.data.DataObject;
+import neu.nctracer.dm.ConfigurationParams;
+import neu.nctracer.exception.ParsingException;
 
 /**
  * Contract for all classes implementing clustering algorithms
@@ -12,5 +14,8 @@ import neu.nctracer.data.DataObject;
  */
 public interface Clusterer {
 
+    void setup(ConfigurationParams params) throws ParsingException;
+
     List<List<DataObject>> createClusters(Collection<DataObject> dataPoints);
 }
+

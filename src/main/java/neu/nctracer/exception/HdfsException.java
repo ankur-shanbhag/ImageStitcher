@@ -18,7 +18,10 @@ public class HdfsException extends IOException {
         super(message, cause);
         this.message = message;
         this.cause = cause;
+    }
 
+    public HdfsException(Throwable cause) {
+        super(cause);
     }
 
     @Override

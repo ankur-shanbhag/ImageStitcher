@@ -98,8 +98,8 @@ public class DataTransformer {
         return movement;
     }
 
-    public static Map<DataObject, double[]> doTranslation(DataObject anchorPoint,
-                                                          Map<DataObject, double[]> relativeMovementMap) {
+    public static Map<DataObject, double[]>
+           doTranslation(DataObject anchorPoint, Map<DataObject, double[]> relativeMovementMap) {
         Map<DataObject, double[]> movedObjects = new HashMap<>();
         for (Entry<DataObject, double[]> entry : relativeMovementMap.entrySet()) {
             DataObject point = entry.getKey();
@@ -108,8 +108,7 @@ public class DataTransformer {
         return movedObjects;
     }
 
-    public static double[] doTranslation(DataObject point,
-                                         double[] movement) {
+    public static double[] doTranslation(DataObject point, double[] movement) {
         double translatedObj[] = new double[point.getDimension()];
         double[] features = point.getFeatures();
         for (int i = 0; i < point.getDimension(); i++) {
@@ -122,3 +121,4 @@ public class DataTransformer {
         // Deny object creation
     }
 }
+
