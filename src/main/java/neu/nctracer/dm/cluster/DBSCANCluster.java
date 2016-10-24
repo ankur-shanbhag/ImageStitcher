@@ -61,9 +61,8 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
      */
     @Override
     public List<List<DataObject>> createClusters(Collection<DataObject> dataPoints) {
-
         if (this.minPoints > dataPoints.size())
-            throw new RuntimeException("MinPoints cannot have a value greater than total number of data points");
+            throw new RuntimeException("Too few data points to perform DBSCAN clustering");
 
         Clusterer<DataObject> clustering = new DBSCANClusterer<>(this.eps, this.minPoints);
 

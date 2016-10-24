@@ -11,7 +11,7 @@ public class DefaultConfigurationParams implements ConfigurationParams {
 
     @Override
     public void parseParams(String paramStr, String delimiter) throws ParsingException {
-        configMap.clear();
+        this.configMap = new HashMap<>();
         String[] params = paramStr.split(delimiter);
         for (String param : params) {
             String[] strings = param.split("\\s*=\\s*");
@@ -20,10 +20,15 @@ public class DefaultConfigurationParams implements ConfigurationParams {
 
             String key = strings[0].trim().toLowerCase();
             String value = strings[1].trim();
-            configMap.put(key, value);
+            this.configMap.put(key, value);
         }
     }
 
+    @Override
+    public void setParams(Map<String, String> params) {
+        this.configMap = new HashMap<>(params);
+    }
+    
     @Override
     public String getParam(String param) {
         return configMap.get(param);
@@ -33,4 +38,5 @@ public class DefaultConfigurationParams implements ConfigurationParams {
     public String toString() {
         return configMap.toString();
     }
+
 }

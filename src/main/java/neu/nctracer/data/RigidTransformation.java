@@ -1,9 +1,10 @@
 package neu.nctracer.data;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-public class RigidTranformation {
+public class RigidTransformation implements DataObject {
 
     private Collection<DataObject> sourceCluster;
     private Collection<DataObject> targetCluster;
@@ -12,8 +13,8 @@ public class RigidTranformation {
 
     private Set<DataCorrespondence> correspondences;
 
-    public RigidTranformation(Collection<DataObject> sourceCluster,
-                              Collection<DataObject> targetCluster) {
+    public RigidTransformation(Collection<DataObject> sourceCluster,
+                               Collection<DataObject> targetCluster) {
         this.sourceCluster = sourceCluster;
         this.targetCluster = targetCluster;
     }
@@ -50,12 +51,13 @@ public class RigidTranformation {
         this.correspondences = correspondences;
     }
 
+    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sourceCluster == null) ? 0 : sourceCluster.hashCode());
-        result = prime * result + ((targetCluster == null) ? 0 : targetCluster.hashCode());
+        result = prime * result + Arrays.hashCode(angles);
         return result;
     }
 
@@ -67,17 +69,40 @@ public class RigidTranformation {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RigidTranformation other = (RigidTranformation) obj;
-        if (sourceCluster == null) {
-            if (other.sourceCluster != null)
-                return false;
-        } else if (!sourceCluster.equals(other.sourceCluster))
-            return false;
-        if (targetCluster == null) {
-            if (other.targetCluster != null)
-                return false;
-        } else if (!targetCluster.equals(other.targetCluster))
+        RigidTransformation other = (RigidTransformation) obj;
+        if (!Arrays.equals(angles, other.angles))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(angles);
+    }
+    
+    @Override
+    public double[] getPoint() {
+        return getAngles();
+    }
+
+    @Override
+    public int compareTo(DataObject o) {
+        throw new RuntimeException("Not implemented...");
+    }
+
+    @Override
+    public void setFeatures(double[] features) {
+        angles = features;
+
+    }
+
+    @Override
+    public int getDimension() {
+        return angles.length;
+    }
+
+    @Override
+    public double[] getFeatures() {
+        return angles;
     }
 }
