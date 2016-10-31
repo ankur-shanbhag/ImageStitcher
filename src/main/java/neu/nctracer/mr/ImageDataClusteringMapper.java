@@ -20,18 +20,22 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.data.DataObject;
+import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.ImageData;
-import neu.nctracer.data.RigidTransformation;
 import neu.nctracer.dm.ConfigurationParams;
 import neu.nctracer.dm.DMConfigurationHandler;
-import neu.nctracer.dm.DefaultConfigurationParams;
 import neu.nctracer.dm.cluster.Clusterer;
 import neu.nctracer.dm.cluster.DBSCANCluster;
+import neu.nctracer.dm.cluster.DataCluster;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
+import neu.nctracer.exception.ReflectionUtilsException;
+import neu.nctracer.log.LogManager;
+import neu.nctracer.log.Logger;
 import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
+import neu.nctracer.utils.ReflectionUtils;
 
 public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
 
@@ -42,7 +46,11 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private final Text TEXT_KEY = new Text();
 
-    private DMConfigurationHandler configParamHandler = DMConfigurationHandler.getDMConfigurationHandler();
+    private DMConfigurationHandler configParamHandler = DMConfigurationHandler.getHandler();
+
+    private Clusterer clusterer = null;
+
+    private Logger logger = LogManager.getLogManager().getDefaultLogger();
 
     @Override
     protected void
@@ -52,48 +60,64 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
         Configuration conf = context.getConfiguration();
 
+        String clustererClassName = conf.get("image.matching.cluster.name",
+                                             DBSCANCluster.class.getName());
+        try {
+            clusterer = ReflectionUtils.instantiate(clustererClassName, Clusterer.class);
+            logger.debug("Using class ["
+                         + clusterer.getClass().getName()
+                         + " for clustering data objects.");
+        } catch (ReflectionUtilsException e) {
+            throw new RuntimeException(e);
+        }
+
         threshold = conf.getDouble(HdfsConstants.IMAGE_MATCHING_ERROR, 0.0);
 
-        String sourceFileData = HdfsFileUtils.readFileAsString(conf,
-                                                               conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH));
-        String targetFileData = HdfsFileUtils.readFileAsString(conf,
-                                                               conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH));
+        String sourceFilePath = conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH);
+        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath);
+        logger.debug("Successfully read source data file from location : " + sourceFilePath);
+
+        String targetFilePath = conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH);
+        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFilePath);
+        logger.debug("Successfully read target data file from location : " + targetFilePath);
+
         try {
             sourceImageData = DataParser.parseImageData(sourceFileData, ImageData.class);
             targetImageData = DataParser.parseImageData(targetFileData, ImageData.class);
         } catch (ParsingException e) {
             throw new IOException("Error while parsing image data.", e);
         }
+
+        logger.info("Image stitching mapreduce job setup phase successful.");
     }
 
     @Override
     public void map(LongWritable key, Text value, Context context) throws IOException,
                                                                    InterruptedException {
-        String delimiter = context.getConfiguration().get("image.matching.cluster.params.delimiter",
-                                                          "\\s*,\\s*");
+        Configuration conf = context.getConfiguration();
+        String delimiter = conf.get("image.matching.cluster.params.delimiter", "\\s*,\\s*");
 
         ConfigurationParams configurationParams = configParamHandler.getConfigurationParamsInstance();
-        Clusterer clusterer = new DBSCANCluster();
         try {
             configurationParams.parseParams(value.toString(), delimiter);
             clusterer.setup(configurationParams);
         } catch (ParsingException e) {
+            logger.error("Error while parsing configuration params : " + value.toString(), e);
             throw new HdfsException(e);
         }
 
-        List<List<DataObject>> sourceClusters = clusterer.createClusters(sourceImageData);
-        List<List<DataObject>> targetClusters = clusterer.createClusters(targetImageData);
+        List<DataCluster> sourceClusters = clusterer.createClusters(sourceImageData);
+        List<DataCluster> targetClusters = clusterer.createClusters(targetImageData);
 
-        List<List<RigidTransformation>> allTransformations = new ArrayList<>();
+        List<List<DataTransformation<DataCluster>>> allTransformations = new ArrayList<>();
 
-        for (List<DataObject> sourceCluster : sourceClusters) {
-            List<RigidTransformation> list = new ArrayList<>();
-            for (List<DataObject> targetCluster : targetClusters) {
-                RigidTransformation tranformation = computeCorrespondences(sourceCluster,
-                                                                           targetCluster);
-                if (tranformation.getCorrespondences().size() < 2)
-                    continue;
-                list.add(tranformation);
+        for (DataCluster sourceCluster : sourceClusters) {
+            List<DataTransformation<DataCluster>> list = new ArrayList<>();
+            for (DataCluster targetCluster : targetClusters) {
+                DataTransformation<DataCluster> tranformation = computeCorrespondences(sourceCluster,
+                                                                                       targetCluster);
+                if (tranformation.getCorrespondences().size() > 1)
+                    list.add(tranformation);
             }
             if (!list.isEmpty())
                 allTransformations.add(list);
@@ -106,43 +130,48 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
                                                                 sourceClusters,
                                                                 targetClusters);
         for (DataObject transform : transformations) {
-            if (transform instanceof RigidTransformation) {
-                TEXT_KEY.set(toString(((RigidTransformation) transform).getCorrespondences()));
+            if (transform instanceof DataTransformation) {
+                DataTransformation<DataCluster> dataTranslation = (DataTransformation<DataCluster>) transform;
+                TEXT_KEY.set(toString(dataTranslation.getCorrespondences()));
                 context.write(TEXT_KEY, NullWritable.get());
             }
         }
+
+        logger.info("Successfully performed map phase for input : " + value);
     }
 
     private List<DataObject> groupTransformations(
-                                                  List<List<RigidTransformation>> allTransformations,
-                                                  List<List<DataObject>> sourceClusters,
-                                                  List<List<DataObject>> targetClusters) {
-
-        Map<Collection<DataObject>, DataObject> targetLookup = new HashMap<>();
+                                                  List<List<DataTransformation<DataCluster>>> transformations,
+                                                  List<DataCluster> sourceClusters,
+                                                  List<DataCluster> targetClusters) {
+        Map<DataCluster, DataObject> targetLookup = new HashMap<>();
         List<DataObject> clusterList = new ArrayList<>();
-
-        recursiveCall(allTransformations, targetLookup, 0, clusterList);
+        groupTransformations(transformations, targetLookup, 0, clusterList);
 
         return clusterList;
     }
 
-    private void recursiveCall(List<List<RigidTransformation>> allTransformations,
-                               Map<Collection<DataObject>, DataObject> targetLookup,
-                               int num,
-                               List<DataObject> clusterList) {
+    private void groupTransformations(List<List<DataTransformation<DataCluster>>> transformations,
+                                      Map<DataCluster, DataObject> targetLookup,
+                                      int num,
+                                      List<DataObject> clusterList) {
 
-        if (num == allTransformations.size()) {
+        if (num == transformations.size()) {
             if (targetLookup.size() < 2)
                 return;
 
-            Clusterer clusterer = new DBSCANCluster();
-            ConfigurationParams params = new DefaultConfigurationParams();
             try {
-                params.parseParams("minpoints=2,eps=20", ",");
-                clusterer.setup(params);
-                List<List<DataObject>> clusters = clusterer.createClusters(targetLookup.values());
+                Map<String, String> configMap = new HashMap<>();
+                configMap.put("minpoints", "2");
+                configMap.put("eps", "20");
 
-                List<DataObject> list = isOptimum(clusters, clusterList);
+                ConfigurationParams params = configParamHandler.getConfigurationParamsInstance();
+                params.setParams(configMap);
+
+                clusterer.setup(params);
+                List<DataCluster> clusters = clusterer.createClusters(targetLookup.values());
+
+                List<DataObject> list = calculateOptimum(clusters, clusterList);
                 if (list != clusterList) {
                     clusterList.clear();
                     clusterList.addAll(list);
@@ -153,30 +182,30 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             return;
         }
 
-        List<RigidTransformation> list = allTransformations.get(num);
+        List<DataTransformation<DataCluster>> list = transformations.get(num);
         for (int i = 0; i < list.size(); i++) {
-            RigidTransformation transformation = list.get(i);
-            if (targetLookup.containsKey(transformation.getTargetCluster()))
+            DataTransformation<DataCluster> transformation = list.get(i);
+            if (targetLookup.containsKey(transformation.getTargetObject()))
                 continue;
-            targetLookup.put(transformation.getTargetCluster(), transformation);
-            recursiveCall(allTransformations, targetLookup, num + 1, clusterList);
-            targetLookup.remove(transformation.getTargetCluster());
+            targetLookup.put(transformation.getTargetObject(), transformation);
+            groupTransformations(transformations, targetLookup, num + 1, clusterList);
+            targetLookup.remove(transformation.getTargetObject());
         }
-        
+
         // do not add any mapping for this source
-        recursiveCall(allTransformations, targetLookup, num + 1, clusterList);
+        groupTransformations(transformations, targetLookup, num + 1, clusterList);
     }
 
-    private List<DataObject> isOptimum(List<List<DataObject>> clusters,
-                                       List<DataObject> clusterList) {
+    private List<DataObject> calculateOptimum(List<DataCluster> clusters,
+                                              List<DataObject> clusterList) {
 
         double minErr = Double.MAX_VALUE;
-        List<DataObject> optimum = null;
+        DataCluster optimum = null;
 
-        for (List<DataObject> cluster : clusters) {
-            double[] center = DataTransformer.computeArithmeticMean(cluster);
+        for (DataCluster cluster : clusters) {
+            double[] center = DataTransformer.computeArithmeticMean(cluster.getDataPoints());
             double err = 0;
-            for (DataObject transformation : cluster) {
+            for (DataObject transformation : cluster.getDataPoints()) {
                 double[] features = transformation.getFeatures();
                 for (int i = 0; i < center.length; i++) {
                     err += Math.abs(center[i] - features[i]);
@@ -190,7 +219,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         }
 
         if (clusterList.isEmpty())
-            return optimum;
+            return optimum.getDataPoints();
 
         double[] center = DataTransformer.computeArithmeticMean(clusterList);
         double err = 0;
@@ -201,25 +230,26 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             }
         }
 
-        return (null == optimum || err < minErr) ? clusterList : optimum;
+        return (null == optimum || err < minErr) ? clusterList : optimum.getDataPoints();
     }
 
-    private RigidTransformation computeCorrespondences(Collection<DataObject> sourceCluster,
-                                                       Collection<DataObject> targetCluster) {
+    private DataTransformation<DataCluster> computeCorrespondences(DataCluster sourceCluster,
+                                                                   DataCluster targetCluster) {
 
         // compute centroids as arithmetic mean of all points in the cluster
         DataObject sourceCentroid = new ImageData();
-        sourceCentroid.setFeatures(DataTransformer.computeArithmeticMean(sourceCluster));
+        sourceCentroid.setFeatures(DataTransformer.computeArithmeticMean(sourceCluster.getDataPoints()));
 
         DataObject targetCentroid = new ImageData();
-        targetCentroid.setFeatures(DataTransformer.computeArithmeticMean(targetCluster));
+        targetCentroid.setFeatures(DataTransformer.computeArithmeticMean(targetCluster.getDataPoints()));
 
         // define translation from source to target
         double[] angles = DataTransformer.computeDirectionAngles(sourceCentroid, targetCentroid);
         // FIXME: Place both images side-by-side and then compute distance
         double distance = DataTransformer.computeEuclideanDistance(sourceCentroid, targetCentroid);
 
-        RigidTransformation transformation = new RigidTransformation(sourceCluster, targetCluster);
+        DataTransformation<DataCluster> transformation = new DataTransformation<>();
+        transformation.setTranslationObjects(sourceCluster, targetCluster);
         transformation.setAngles(angles);
         transformation.setDistance(distance);
 
@@ -253,13 +283,13 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private Set<DataCorrespondence> findCorrespondences(
                                                         Map<DataObject, DataObject> translatedObjMapping,
-                                                        Collection<DataObject> targetCluster) {
+                                                        DataCluster targetCluster) {
 
         SortedMap<Double, List<DataCorrespondence>> sortedMap = findSortedCorrespondences(translatedObjMapping,
                                                                                           targetCluster);
         // create lookup for fast access
         Set<DataObject> sourceLookup = translatedObjMapping.keySet();
-        Set<DataObject> targetLookup = new HashSet<>(targetCluster);
+        Set<DataObject> targetLookup = new HashSet<>(targetCluster.getDataPoints());
 
         Set<DataCorrespondence> correspondences = new HashSet<>();
         for (Entry<Double, List<DataCorrespondence>> entry : sortedMap.entrySet()) {
@@ -284,7 +314,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private SortedMap<Double, List<DataCorrespondence>>
             findSortedCorrespondences(Map<DataObject, DataObject> translatedObjMapping,
-                                      Collection<DataObject> targetCluster) {
+                                      DataCluster targetCluster) {
 
         SortedMap<Double, List<DataCorrespondence>> sortedCorrespondences = new TreeMap<>();
 
@@ -292,7 +322,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             DataObject sourcePoint = entry.getKey();
             DataObject movedPoint = entry.getValue();
 
-            for (DataObject targetPoint : targetCluster) {
+            for (DataObject targetPoint : targetCluster.getDataPoints()) {
                 double distance = DataTransformer.computeEuclideanDistance(movedPoint, targetPoint);
                 if (distance > threshold)
                     continue;
@@ -309,10 +339,9 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         return sortedCorrespondences;
     }
 
-    private Map<DataObject, double[]> relativePositions(Collection<DataObject> cluster,
-                                                        DataObject centroid) {
+    private Map<DataObject, double[]> relativePositions(DataCluster cluster, DataObject centroid) {
         Map<DataObject, double[]> relativeMovementMap = new HashMap<>();
-        for (DataObject point : cluster) {
+        for (DataObject point : cluster.getDataPoints()) {
             double[] movement = DataTransformer.computeRelativePosition(centroid, point);
             relativeMovementMap.put(point, movement);
         }

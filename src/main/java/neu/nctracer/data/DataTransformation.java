@@ -1,22 +1,37 @@
 package neu.nctracer.data;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Set;
 
-public class RigidTransformation implements DataObject {
+/**
+ * Defines translation between entities defined by parameters of type
+ * <code>T</code>
+ * 
+ * @author Ankur Shanbhag
+ *
+ * @param <T>
+ *            - defines translation between type of elements
+ */
+public class DataTransformation<T> implements DataObject {
 
-    private Collection<DataObject> sourceCluster;
-    private Collection<DataObject> targetCluster;
+    private T sourceObj;
+    private T targetObj;
     private double[] angles;
     private double distance;
 
     private Set<DataCorrespondence> correspondences;
 
-    public RigidTransformation(Collection<DataObject> sourceCluster,
-                               Collection<DataObject> targetCluster) {
-        this.sourceCluster = sourceCluster;
-        this.targetCluster = targetCluster;
+    public void setTranslationObjects(T sourceObj, T targetObj) {
+        this.sourceObj = sourceObj;
+        this.targetObj = targetObj;
+    }
+
+    public T getSourceObject() {
+        return sourceObj;
+    }
+
+    public T getTargetObject() {
+        return targetObj;
     }
 
     public double[] getAngles() {
@@ -35,14 +50,6 @@ public class RigidTransformation implements DataObject {
         this.distance = distance;
     }
 
-    public Collection<DataObject> getSourceCluster() {
-        return sourceCluster;
-    }
-
-    public Collection<DataObject> getTargetCluster() {
-        return targetCluster;
-    }
-
     public Set<DataCorrespondence> getCorrespondences() {
         return correspondences;
     }
@@ -50,8 +57,6 @@ public class RigidTransformation implements DataObject {
     public void setCorrespondences(Set<DataCorrespondence> correspondences) {
         this.correspondences = correspondences;
     }
-
-    
 
     @Override
     public int hashCode() {
@@ -69,7 +74,7 @@ public class RigidTransformation implements DataObject {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RigidTransformation other = (RigidTransformation) obj;
+        DataTransformation other = (DataTransformation) obj;
         if (!Arrays.equals(angles, other.angles))
             return false;
         return true;
@@ -79,7 +84,7 @@ public class RigidTransformation implements DataObject {
     public String toString() {
         return Arrays.toString(angles);
     }
-    
+
     @Override
     public double[] getPoint() {
         return getAngles();
@@ -92,8 +97,7 @@ public class RigidTransformation implements DataObject {
 
     @Override
     public void setFeatures(double[] features) {
-        angles = features;
-
+        setAngles(features);
     }
 
     @Override
@@ -103,6 +107,6 @@ public class RigidTransformation implements DataObject {
 
     @Override
     public double[] getFeatures() {
-        return angles;
+        return getAngles();
     }
 }

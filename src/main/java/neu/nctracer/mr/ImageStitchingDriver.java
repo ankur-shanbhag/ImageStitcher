@@ -42,15 +42,15 @@ public class ImageStitchingDriver implements ImageStitcher {
     
     private Logger logger = LogManager.getLogManager().getDefaultLogger();
     
-    public void setup(Configuration conf, String localInputPath, String localOutputPath)
+    public void setup(String localInputPath, String localOutputPath)
             throws HdfsException {
-        this.conf = conf;
         this.inputPath = localInputPath;
         this.outputPath = localOutputPath;
 
         try {
             ConfigurationManager handler = ConfigurationManager.getConfigurationManager();
 
+            this.conf = createConfiguration(handler);
             hdfsSourceImage = handler.getConfig(ConfigurationConstants.HDFS_SOURCE_IMAGE_PATH);
             hdfsTargetImage = handler.getConfig(ConfigurationConstants.HDFS_TARGET_IMAGE_FILE);
             threshold = handler.getConfig(ConfigurationConstants.ERROR_THRESHOLD);
@@ -89,6 +89,17 @@ public class ImageStitchingDriver implements ImageStitcher {
         }
     }
 
+    private Configuration
+            createConfiguration(ConfigurationManager handler) throws InvalidConfigKeyException {
+
+        String hadoopConfDir = handler.getConfig(ConfigurationConstants.HADOOP_CONF_DIR);
+        Configuration conf = new Configuration();
+        conf.addResource(new Path(hadoopConfDir + "/mapred-site.xml"));
+        conf.addResource(new Path(hadoopConfDir + "/hdfs-site.xml"));
+        conf.addResource(new Path(hadoopConfDir + "/core-site.xml"));
+        return conf;
+    }
+
     public boolean run() throws HdfsException {
 
         try {
@@ -100,11 +111,14 @@ public class ImageStitchingDriver implements ImageStitcher {
             job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImage);
             job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImage);
             job.getConfiguration().set(HdfsConstants.IMAGE_MATCHING_ERROR, threshold);
-
+            
+            // add all required jars to mapreduce job
             addJarToDistributedCache(job);
 
             NLineInputFormat.addInputPath(job, new Path(hdfsInputPath));
             job.setInputFormatClass(NLineInputFormat.class);
+            
+            // map only job
             job.setNumReduceTasks(0);
             job.setOutputKeyClass(Text.class);
             job.setOutputValueClass(NullWritable.class);
@@ -118,7 +132,7 @@ public class ImageStitchingDriver implements ImageStitcher {
                 HdfsFileUtils.copyToLocal(hdfsOutputPath, outputPath, conf);
                 logger.debug("HDFS output files copied to local file system");
             } else {
-                logger.error("Mapreduce job completed with errors. Check hadoop logs for details.");
+                logger.error("Mapreduce job terminated with errors. Check hadoop logs for details.");
             }
             return status;
         } catch (IOException e) {
@@ -155,7 +169,7 @@ public class ImageStitchingDriver implements ImageStitcher {
 
             final String hadoopTmpJars = "tmpjars";
             String tmpJars = (null == conf.get(hadoopTmpJars)) ? localJars
-                    : conf.get(hadoopTmpJars) + "," + localJars;
+                    : (conf.get(hadoopTmpJars) + "," + localJars);
 
             conf.set(hadoopTmpJars, tmpJars);
             logger.debug("Dependent jar files added successfully. [" + localJars + "]");

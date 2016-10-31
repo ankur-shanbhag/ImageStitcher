@@ -16,6 +16,5 @@ public interface Clusterer {
 
     void setup(ConfigurationParams params) throws ParsingException;
 
-    List<List<DataObject>> createClusters(Collection<DataObject> dataPoints);
+    List<DataCluster> createClusters(Collection<DataObject> dataPoints);
 }
-

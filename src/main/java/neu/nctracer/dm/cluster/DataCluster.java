@@ -1,0 +1,66 @@
+package neu.nctracer.dm.cluster;
+
+import java.util.List;
+import java.util.UUID;
+
+import neu.nctracer.data.DataObject;
+
+/**
+ * Represents group of points and associated id to uniquely the group
+ * 
+ * @author Ankur Shanbhag
+ */
+public class DataCluster implements Comparable<DataCluster> {
+
+    private final String clusterId;
+    private final List<DataObject> cluster;
+
+    public DataCluster(List<DataObject> cluster) {
+        clusterId = UUID.randomUUID().toString();
+        this.cluster = cluster;
+    }
+
+    public DataCluster(String clusterId, List<DataObject> cluster) {
+        this.clusterId = clusterId;
+        this.cluster = cluster;
+    }
+
+    public List<DataObject> getDataPoints() {
+        return cluster;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((clusterId == null) ? 0 : clusterId.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DataCluster other = (DataCluster) obj;
+        if (clusterId == null) {
+            if (other.clusterId != null)
+                return false;
+        } else if (!clusterId.equals(other.clusterId))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
+
+    @Override
+    public int compareTo(DataCluster o) {
+        throw new RuntimeException("Not yet implemented ...");
+    }
+}

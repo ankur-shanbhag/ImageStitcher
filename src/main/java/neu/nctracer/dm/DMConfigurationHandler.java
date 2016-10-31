@@ -6,7 +6,7 @@ public final class DMConfigurationHandler {
     private DMConfigurationHandler() {
     }
 
-    public static DMConfigurationHandler getDMConfigurationHandler() {
+    public static DMConfigurationHandler getHandler() {
         return handler;
     }
 

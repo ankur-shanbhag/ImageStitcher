@@ -60,7 +60,7 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
      * be considered as noise and hence ignored
      */
     @Override
-    public List<List<DataObject>> createClusters(Collection<DataObject> dataPoints) {
+    public List<DataCluster> createClusters(Collection<DataObject> dataPoints) {
         if (this.minPoints > dataPoints.size())
             throw new RuntimeException("Too few data points to perform DBSCAN clustering");
 
@@ -68,9 +68,9 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
 
         List<? extends Cluster<DataObject>> dbscanClusters = clustering.cluster(dataPoints);
 
-        List<List<DataObject>> clusters = new ArrayList<>();
+        List<DataCluster> clusters = new ArrayList<>();
         for (Cluster<DataObject> cluster : dbscanClusters) {
-            clusters.add(cluster.getPoints());
+            clusters.add(new DataCluster(cluster.getPoints()));
         }
 
         return clusters;
