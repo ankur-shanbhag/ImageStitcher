@@ -7,6 +7,12 @@ import neu.nctracer.log.Logger;
 import neu.nctracer.mr.ImageStitcher;
 import neu.nctracer.mr.ImageStitchingDriver;
 
+/**
+ * Starting point for image stitching program
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class Client {
     public static void main(String[] args) {
 
@@ -22,6 +28,8 @@ public class Client {
         Logger logger = LogManager.getLogManager().getDefaultLogger();
 
         try {
+            // Invoke one of many image stitching implementations. Can be made
+            // configurable
             ImageStitcher driver = new ImageStitchingDriver();
             driver.setup(localInputPath, localOutputPath);
             boolean status = driver.run();

@@ -6,7 +6,7 @@ import neu.nctracer.exception.HdfsException;
 
 /**
  * Interface to be implemented by all the classes performing image stitching
- * task
+ * task.
  * 
  * @author Ankur Shanbhag
  *

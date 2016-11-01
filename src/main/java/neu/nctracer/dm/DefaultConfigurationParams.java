@@ -5,6 +5,13 @@ import java.util.Map;
 
 import neu.nctracer.exception.ParsingException;
 
+/**
+ * Default implementation to dynamic set/get configuration params required by
+ * data mining algorithms
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class DefaultConfigurationParams implements ConfigurationParams {
 
     private Map<String, String> configMap = new HashMap<>();
@@ -28,7 +35,7 @@ public class DefaultConfigurationParams implements ConfigurationParams {
     public void setParams(Map<String, String> params) {
         this.configMap = new HashMap<>(params);
     }
-    
+
     @Override
     public String getParam(String param) {
         return configMap.get(param);

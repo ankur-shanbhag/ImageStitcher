@@ -1,13 +1,16 @@
 package neu.nctracer.data;
 
+/**
+ * Class is used for holding one-to-one correspondence between two
+ * {@linkplain DataObject}
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class DataCorrespondence {
 
     private DataObject source;
     private DataObject target;
-
-    public DataCorrespondence() {
-
-    }
 
     public DataCorrespondence(DataObject source, DataObject target) {
         this.source = source;

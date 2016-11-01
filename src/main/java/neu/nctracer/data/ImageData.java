@@ -3,7 +3,7 @@ package neu.nctracer.data;
 import java.util.Arrays;
 
 /**
- * Class to hold image data
+ * Class to hold image data points in 3 dimensions
  * 
  * @author Ankur Shanbhag
  *

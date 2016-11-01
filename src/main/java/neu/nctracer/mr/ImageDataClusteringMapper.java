@@ -37,6 +37,34 @@ import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
 import neu.nctracer.utils.ReflectionUtils;
 
+/**
+ * Mapper class to run image stitching algorithm on 2 image stacks (namely
+ * source and target) and find one-to-one correspondence of matching points (if
+ * any) in these image stacks.<br>
+ * 
+ * Algorithm implementation details:<br>
+ * 1. Read source and target image data points from HDFS<br>
+ * 2. Find clusters of data points using configurations specified in the input
+ * line to the mapper. DBSCAN used as default clustering algorithm<br>
+ * 3. Find cluster center as arithmetic mean of all points in the cluster<br>
+ * 4. Define translation from source cluster center point to a target cluster
+ * center point. Apply this translation to all points in the source cluster<br>
+ * 6. Find one-to-one correspondence between translated source cluster points
+ * and target cluster points. Choose closest target point (using euclidean
+ * distance) as correspondence. Compute error.<br>
+ * 7. Performs steps 3 through 6 for all pairs of source and target cluster
+ * points.<br>
+ * 8. For all source clusters, pick target clusters and translation defined
+ * above. Find group of translations which are consistent across different pairs
+ * picked. Compute translation error for all cluster pairs in a group. Repeat
+ * again for different pairs of source and target clusters. Keep track of
+ * minimum error and associated group.<br>
+ * 9. For the group with minimum error, emit one-to-one correspondences from
+ * cluster pairs.
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
 
     private Collection<DataObject> sourceImageData = null;
@@ -171,7 +199,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
                 clusterer.setup(params);
                 List<DataCluster> clusters = clusterer.createClusters(targetLookup.values());
 
-                List<DataObject> list = calculateOptimum(clusters, clusterList);
+                List<DataObject> list = findOptimum(clusters, clusterList);
                 if (list != clusterList) {
                     clusterList.clear();
                     clusterList.addAll(list);
@@ -196,8 +224,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         groupTransformations(transformations, targetLookup, num + 1, clusterList);
     }
 
-    private List<DataObject> calculateOptimum(List<DataCluster> clusters,
-                                              List<DataObject> clusterList) {
+    private List<DataObject> findOptimum(List<DataCluster> clusters, List<DataObject> clusterList) {
 
         double minErr = Double.MAX_VALUE;
         DataCluster optimum = null;

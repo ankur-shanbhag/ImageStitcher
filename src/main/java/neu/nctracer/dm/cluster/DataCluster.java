@@ -6,7 +6,8 @@ import java.util.UUID;
 import neu.nctracer.data.DataObject;
 
 /**
- * Represents group of points and associated id to uniquely the group
+ * Represents group of points with associated group id to uniquely identify the
+ * group
  * 
  * @author Ankur Shanbhag
  */
@@ -15,6 +16,11 @@ public class DataCluster implements Comparable<DataCluster> {
     private final String clusterId;
     private final List<DataObject> cluster;
 
+    /**
+     * Randomly assigns UUID as a group id
+     * 
+     * @param cluster
+     */
     public DataCluster(List<DataObject> cluster) {
         clusterId = UUID.randomUUID().toString();
         this.cluster = cluster;
@@ -27,6 +33,10 @@ public class DataCluster implements Comparable<DataCluster> {
 
     public List<DataObject> getDataPoints() {
         return cluster;
+    }
+
+    public String getClusterId() {
+        return clusterId;
     }
 
     @Override

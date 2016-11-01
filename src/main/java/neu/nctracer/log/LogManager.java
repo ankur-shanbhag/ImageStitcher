@@ -14,11 +14,11 @@ import java.net.URL;
 public class LogManager {
 
     private static LogManager logManager = new LogManager();
-    private Logger logger;
+    private Logger defaultLogger;
 
     private LogManager() {
         URL url = LogManager.class.getResource("/log4j.xml");
-        logger = new DefaultLogger(url);
+        defaultLogger = new DefaultLogger(url);
     }
 
     public static LogManager getLogManager() {
@@ -26,10 +26,10 @@ public class LogManager {
     }
 
     public void setDefaultLogger(Logger logger) {
-        this.logger = logger;
+        this.defaultLogger = logger;
     }
 
     public Logger getDefaultLogger() {
-        return logger;
+        return defaultLogger;
     }
 }

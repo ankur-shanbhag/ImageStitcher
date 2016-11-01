@@ -5,6 +5,12 @@ import java.io.InputStream;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.InvalidConfigKeyException;
 
+/**
+ * Interface to be implemented by all the configuration reader implementations.
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public interface ConfigurationReader {
 
     void loadConfigurations(InputStream inputStream) throws ConfigurationException;

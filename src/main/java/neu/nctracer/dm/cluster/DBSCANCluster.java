@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.math3.ml.clustering.Cluster;
-import org.apache.commons.math3.ml.clustering.Clusterer;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import neu.nctracer.data.DataObject;
@@ -28,7 +27,7 @@ import neu.nctracer.exception.ParsingException;
  * @author Ankur Shanbhag
  * 
  */
-public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
+public class DBSCANCluster implements Clusterer {
 
     /**
      * maximum radius of the neighborhood
@@ -64,7 +63,9 @@ public class DBSCANCluster implements neu.nctracer.dm.cluster.Clusterer {
         if (this.minPoints > dataPoints.size())
             throw new RuntimeException("Too few data points to perform DBSCAN clustering");
 
-        Clusterer<DataObject> clustering = new DBSCANClusterer<>(this.eps, this.minPoints);
+        org.apache.commons.math3.ml.clustering.Clusterer<DataObject> clustering = null;
+
+        clustering = new DBSCANClusterer<>(this.eps, this.minPoints);
 
         List<? extends Cluster<DataObject>> dbscanClusters = clustering.cluster(dataPoints);
 

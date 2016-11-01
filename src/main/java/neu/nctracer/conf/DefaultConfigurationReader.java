@@ -12,6 +12,8 @@ import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.InvalidConfigKeyException;
 
 /**
+ * Default implementation provided to read configuration parameters set by the
+ * user. Expects the configurations to be of the form "key=value"
  * 
  * @author Ankur Shanbhag
  */
@@ -30,9 +32,9 @@ class DefaultConfigurationReader implements ConfigurationReader {
      */
     @Override
     public void loadConfigurations(InputStream inputStream) throws ConfigurationException {
-        
+
         this.inputStream = inputStream;
-        
+
         try {
             Properties properties = new Properties();
             properties.load(inputStream);

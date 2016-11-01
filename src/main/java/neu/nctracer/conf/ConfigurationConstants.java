@@ -1,5 +1,10 @@
 package neu.nctracer.conf;
 
+/**
+ * Constants to be read from <tt>configuration.properties</tt> file
+ * 
+ * @author Ankur Shanbhag
+ */
 public final class ConfigurationConstants {
 
     public static final String PROJECT_BASE_DIR = "base.project.path";

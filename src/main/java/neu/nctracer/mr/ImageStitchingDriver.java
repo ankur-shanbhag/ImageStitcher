@@ -22,7 +22,8 @@ import neu.nctracer.log.Logger;
 import neu.nctracer.utils.HdfsFileUtils;
 
 /**
- * MapReduce implementation for stitching 2 image stacks.
+ * Sets up resources needed by mapreduce job to perform image stitching
+ * operation.
  * 
  * @author Ankur Shanbhag
  */
@@ -39,11 +40,13 @@ public class ImageStitchingDriver implements ImageStitcher {
     private String hdfsSourceImage = null;
     private String hdfsTargetImage = null;
     private String threshold = null;
-    
+
     private Logger logger = LogManager.getLogManager().getDefaultLogger();
-    
-    public void setup(String localInputPath, String localOutputPath)
-            throws HdfsException {
+
+    /**
+     * Copies all the required files to HDFS required by the mapreduce job
+     */
+    public void setup(String localInputPath, String localOutputPath) throws HdfsException {
         this.inputPath = localInputPath;
         this.outputPath = localOutputPath;
 
@@ -75,7 +78,7 @@ public class ImageStitchingDriver implements ImageStitcher {
             HdfsFileUtils.copyFromLocal(inputPath, hdfsInputPath, conf);
             HdfsFileUtils.copyFromLocal(localTargetImage, hdfsTargetImage, conf);
             HdfsFileUtils.copyFromLocal(localSourceImage, hdfsSourceImage, conf);
-            
+
             logger.info("Image stitching job setup successful.");
         } catch (InvalidConfigKeyException e) {
             logger.error("Cannot find Hadoop job parameters.", e);
@@ -83,7 +86,7 @@ public class ImageStitchingDriver implements ImageStitcher {
         } catch (ConfigurationException e) {
             logger.error("Cannot find Hadoop job parameters.", e);
             throw new HdfsException("Cannot find Hadoop job parameters.", e);
-        } catch (HdfsException e){
+        } catch (HdfsException e) {
             logger.error("Error performing HDFS file operation.", e);
             throw e;
         }
@@ -100,6 +103,11 @@ public class ImageStitchingDriver implements ImageStitcher {
         return conf;
     }
 
+    /**
+     * Copies all required libraries to mapreduce job class path. Kicks off the
+     * mapreduce job. Every input line specifies configurations defined for
+     * clustering data points.
+     */
     public boolean run() throws HdfsException {
 
         try {
@@ -107,17 +115,17 @@ public class ImageStitchingDriver implements ImageStitcher {
             job.setJarByClass(ImageStitchingDriver.class);
             job.setMapperClass(ImageDataClusteringMapper.class);
 
-            job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
+            job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 3);
             job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImage);
             job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImage);
             job.getConfiguration().set(HdfsConstants.IMAGE_MATCHING_ERROR, threshold);
-            
+
             // add all required jars to mapreduce job
             addJarToDistributedCache(job);
 
             NLineInputFormat.addInputPath(job, new Path(hdfsInputPath));
             job.setInputFormatClass(NLineInputFormat.class);
-            
+
             // map only job
             job.setNumReduceTasks(0);
             job.setOutputKeyClass(Text.class);
@@ -148,11 +156,9 @@ public class ImageStitchingDriver implements ImageStitcher {
      * Add all the dependent jar files to distributed cache
      * 
      * @param job
-     * @throws IOException
      * @throws HdfsException
      */
-    private void addJarToDistributedCache(Job job)
-            throws IOException, HdfsException {
+    private void addJarToDistributedCache(Job job) throws IOException {
         logger.debug("Adding all the dependent jar files to distributed cache.");
         try {
             ConfigurationManager handler = ConfigurationManager.getConfigurationManager();
@@ -169,7 +175,9 @@ public class ImageStitchingDriver implements ImageStitcher {
 
             final String hadoopTmpJars = "tmpjars";
             String tmpJars = (null == conf.get(hadoopTmpJars)) ? localJars
-                    : (conf.get(hadoopTmpJars) + "," + localJars);
+                                                               : (conf.get(hadoopTmpJars)
+                                                                  + ","
+                                                                  + localJars);
 
             conf.set(hadoopTmpJars, tmpJars);
             logger.debug("Dependent jar files added successfully. [" + localJars + "]");

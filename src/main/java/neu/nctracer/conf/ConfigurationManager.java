@@ -6,7 +6,10 @@ import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.InvalidConfigKeyException;
 
 /**
- * Default configuration manager to be used across all classes.
+ * Configuration manager to be used to get configuration parameters. This class
+ * hides actual implementing of {@link ConfigurationReader} from rest of the
+ * project. Provides API to set change implementation for
+ * {@link ConfigurationReader} without impacting other classes
  * 
  * @author Ankur Shanbhag
  */
@@ -19,7 +22,7 @@ public class ConfigurationManager {
 
     private ConfigurationManager() throws ConfigurationException {
         InputStream stream = ConfigurationManager.class.getClassLoader()
-                .getResourceAsStream(configFile);
+                                                       .getResourceAsStream(configFile);
         defaultConfigReader = new DefaultConfigurationReader();
         defaultConfigReader.loadConfigurations(stream);
     }
@@ -47,7 +50,7 @@ public class ConfigurationManager {
     public void setDefaultReaderAndLoad(ConfigurationReader reader) throws ConfigurationException {
         defaultConfigReader = reader;
         InputStream stream = ConfigurationManager.class.getClassLoader()
-                .getResourceAsStream(configFile);
+                                                       .getResourceAsStream(configFile);
         defaultConfigReader.loadConfigurations(stream);
     }
 }
