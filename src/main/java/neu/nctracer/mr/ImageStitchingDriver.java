@@ -44,7 +44,7 @@ public class ImageStitchingDriver implements ImageStitcher {
     private Logger logger = LogManager.getLogManager().getDefaultLogger();
 
     /**
-     * Copies all the required files to HDFS required by the mapreduce job
+     * Copies all the local files to HDFS required by the mapreduce job
      */
     public void setup(String localInputPath, String localOutputPath) throws HdfsException {
         this.inputPath = localInputPath;
@@ -82,7 +82,7 @@ public class ImageStitchingDriver implements ImageStitcher {
             hdfsSourceImage = HdfsFileUtils.copyFromLocal(localSourceImage, hdfsBaseDirPath, conf);
             hdfsTargetImage = HdfsFileUtils.copyFromLocal(localTargetImage, hdfsBaseDirPath, conf);
 
-            logger.info("Image stitching job setup successful.");
+            logger.info("Image stitching mapreduce job setup successful.");
         } catch (InvalidConfigKeyException | ConfigurationException e) {
             logger.error("Cannot find Hadoop job parameters.", e);
             throw new HdfsException("Cannot find Hadoop job parameters.", e);
@@ -138,7 +138,7 @@ public class ImageStitchingDriver implements ImageStitcher {
             if (status) {
                 logger.info("Mapreduce job completed successfully.");
                 HdfsFileUtils.copyToLocal(hdfsOutputPath, outputPath, conf);
-                logger.debug("HDFS output files copied to local file system");
+                logger.debug("HDFS output files copied to local file system - " + outputPath);
             } else {
                 logger.error("Mapreduce job terminated with errors. Check hadoop logs for details.");
             }

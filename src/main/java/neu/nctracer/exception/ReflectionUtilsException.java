@@ -1,10 +1,9 @@
 package neu.nctracer.exception;
 
 public class ReflectionUtilsException extends Exception {
-    private static final long serialVersionUID = 2232332434265L;
+    private static final long serialVersionUID = 222332332434265L;
 
     private String message;
-    private Throwable cause;
 
     public ReflectionUtilsException(String message) {
         super(message);
@@ -14,12 +13,10 @@ public class ReflectionUtilsException extends Exception {
     public ReflectionUtilsException(String message, Throwable cause) {
         super(message, cause);
         this.message = message;
-        this.cause = cause;
     }
 
     public ReflectionUtilsException(Throwable cause) {
         super(cause);
-        this.cause = cause;
     }
 
     @Override

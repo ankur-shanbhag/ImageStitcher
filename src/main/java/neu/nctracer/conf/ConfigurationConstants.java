@@ -19,7 +19,7 @@ public final class ConfigurationConstants {
     public static final String HADOOP_CONF_DIR = "hadoop.conf.path";
 
     // HDFS configurations
-    public static final String HDFS_BASE_DIR = "hadoop.main.dir";
+    public static final String HDFS_BASE_DIR = "hdfs.main.dir";
     public static final String DELETE_HDFS_DIRS = "hdfs.dirs.delete";
 
     public static final String GNUPLOT_PATH = "gnuplot.process.path";
