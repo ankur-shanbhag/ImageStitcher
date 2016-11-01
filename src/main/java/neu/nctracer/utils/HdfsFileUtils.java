@@ -23,8 +23,8 @@ import neu.nctracer.exception.HdfsException;
  */
 public final class HdfsFileUtils {
 
-    public static String readFileAsString(Configuration conf, String filePath)
-            throws HdfsException {
+    public static String readFileAsString(Configuration conf,
+                                          String filePath) throws HdfsException {
         byte[] bytes = readFile(conf, filePath);
         return new Text(bytes).toString();
     }
@@ -50,8 +50,9 @@ public final class HdfsFileUtils {
         }
     }
 
-    public static boolean createDir(String path, boolean overwrite, Configuration conf)
-            throws HdfsException {
+    public static boolean createDir(String path,
+                                    boolean overwrite,
+                                    Configuration conf) throws HdfsException {
         try {
             FileSystem fs = FileSystem.get(URI.create(path), conf);
             Path hdfsDir = new Path(path);
@@ -66,8 +67,9 @@ public final class HdfsFileUtils {
         }
     }
 
-    public static boolean delete(String path, boolean recursive, Configuration conf)
-            throws HdfsException {
+    public static boolean delete(String path,
+                                 boolean recursive,
+                                 Configuration conf) throws HdfsException {
         try {
             FileSystem fs = FileSystem.get(URI.create(path), conf);
             return fs.exists(new Path(path)) ? fs.delete(new Path(path), recursive) : true;
@@ -77,30 +79,38 @@ public final class HdfsFileUtils {
         }
     }
 
-    public static void copyFromLocal(String localDirPath,
-                                     String hdfsDirPath,
-                                     Configuration conf)
-            throws HdfsException {
+    public static String copyFromLocal(String localPath,
+                                       String hdfsPath,
+                                       Configuration conf) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(hdfsDirPath), conf);
+            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
 
-            if (fs.exists(new Path(hdfsDirPath)) && !fs.delete(new Path(hdfsDirPath), true))
-                throw new HdfsException("Error deleting destination path.");
+            String hdfsCopiedPath = hdfsPath;
 
-            fs.copyFromLocalFile(false, true, new Path(localDirPath), new Path(hdfsDirPath));
+            if (isDir(hdfsPath, conf)) {
+                // if hdfsPath already exists, a new file/directory is created
+                // inside it with same name as localPath
+                hdfsCopiedPath = hdfsPath + Path.SEPARATOR + new Path(localPath).getName();
+            }
+
+            fs.copyFromLocalFile(false, true, new Path(localPath), new Path(hdfsPath));
+
+            return hdfsCopiedPath;
         } catch (IOException e) {
             throw new HdfsException("Error while copying local files to HDFS.", e);
         }
     }
 
-    public static void copyToLocal(String hdfsPath, String localPath, Configuration conf) throws HdfsException {
+    public static void copyToLocal(String hdfsPath,
+                                   String localPath,
+                                   Configuration conf) throws HdfsException {
         try {
             FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
 
             Path srcPath = new Path(hdfsPath);
             Path dstPath = new Path(localPath);
             if (!fs.exists(srcPath))
-                throw new HdfsException("Hdfs path [" 
+                throw new HdfsException("Hdfs path ["
                                         + hdfsPath
                                         + "] does not exist. Cannot perform copy to local.");
 
@@ -123,6 +133,19 @@ public final class HdfsFileUtils {
             return filePaths;
         } catch (IOException e) {
             throw new HdfsException("Error while copying local files to HDFS.", e);
+        }
+    }
+
+    public static boolean isDir(String hdfsPath, Configuration conf) throws HdfsException {
+        try {
+            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
+            Path path = new Path(hdfsPath);
+            return fs.exists(path) && fs.isDirectory(path);
+        } catch (IOException exp) {
+            throw new HdfsException("Error checking if HDFS path ["
+                                    + hdfsPath
+                                    + "] is a directory",
+                                    exp);
         }
     }
 

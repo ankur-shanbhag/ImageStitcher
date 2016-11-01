@@ -54,36 +54,36 @@ public class ImageStitchingDriver implements ImageStitcher {
             ConfigurationManager handler = ConfigurationManager.getConfigurationManager();
 
             this.conf = createConfiguration(handler);
-            hdfsSourceImage = handler.getConfig(ConfigurationConstants.HDFS_SOURCE_IMAGE_PATH);
-            hdfsTargetImage = handler.getConfig(ConfigurationConstants.HDFS_TARGET_IMAGE_FILE);
-            threshold = handler.getConfig(ConfigurationConstants.ERROR_THRESHOLD);
 
-            hdfsInputPath = handler.getConfig(ConfigurationConstants.HDFS_INPUT_DIR);
-            hdfsOutputPath = handler.getConfig(ConfigurationConstants.HDFS_OUTPUT_DIR);
+            String hdfsBaseDirPath = handler.getConfig(ConfigurationConstants.HDFS_BASE_DIR);
+
+            String deleteOutputDir = handler.getConfig(ConfigurationConstants.DELETE_HDFS_DIRS);
+            if (Boolean.valueOf(deleteOutputDir)) {
+                logger.debug("Deleting HDFS base directory - " + hdfsBaseDirPath);
+                HdfsFileUtils.delete(hdfsBaseDirPath, true, conf);
+                logger.info("Successfully deleted HDFS base directory - " + hdfsBaseDirPath);
+
+            } else if (HdfsFileUtils.isDir(hdfsBaseDirPath, conf)) {
+                throw new HdfsException("HDFS base directory aready exists - "
+                                        + hdfsBaseDirPath
+                                        + ". Cannot start mapreduce job to perform image stitching.");
+            }
+
+            HdfsFileUtils.createDir(hdfsBaseDirPath, false, conf);
+
+            hdfsOutputPath = hdfsBaseDirPath + Path.SEPARATOR + "hdfs-output-dir";
+            threshold = handler.getConfig(ConfigurationConstants.ERROR_THRESHOLD);
 
             String localSourceImage = handler.getConfig(ConfigurationConstants.LOCAL_SOURCE_IMAGE_FILE);
             String localTargetImage = handler.getConfig(ConfigurationConstants.LOCAL_TARGET_IMAGE_FILE);
 
-            String deleteOutputDir = handler.getConfig(ConfigurationConstants.DELETE_HDFS_DIRS);
-            if (Boolean.valueOf(deleteOutputDir)) {
-                logger.debug("Deleting HDFS files and directories.");
-                HdfsFileUtils.delete(hdfsInputPath, true, conf);
-                HdfsFileUtils.delete(hdfsOutputPath, true, conf);
-                HdfsFileUtils.delete(hdfsSourceImage, false, conf);
-                HdfsFileUtils.delete(hdfsTargetImage, false, conf);
-                logger.info("Successfully deleted all HDFS files and directories.");
-            }
-
-            logger.debug("Deleting HDFS files and directories.");
-            HdfsFileUtils.copyFromLocal(inputPath, hdfsInputPath, conf);
-            HdfsFileUtils.copyFromLocal(localTargetImage, hdfsTargetImage, conf);
-            HdfsFileUtils.copyFromLocal(localSourceImage, hdfsSourceImage, conf);
+            logger.debug("Copying all local files to HDFS dir - " + hdfsBaseDirPath);
+            hdfsInputPath = HdfsFileUtils.copyFromLocal(inputPath, hdfsBaseDirPath, conf);
+            hdfsSourceImage = HdfsFileUtils.copyFromLocal(localSourceImage, hdfsBaseDirPath, conf);
+            hdfsTargetImage = HdfsFileUtils.copyFromLocal(localTargetImage, hdfsBaseDirPath, conf);
 
             logger.info("Image stitching job setup successful.");
-        } catch (InvalidConfigKeyException e) {
-            logger.error("Cannot find Hadoop job parameters.", e);
-            throw new HdfsException("Cannot find Hadoop job parameters.", e);
-        } catch (ConfigurationException e) {
+        } catch (InvalidConfigKeyException | ConfigurationException e) {
             logger.error("Cannot find Hadoop job parameters.", e);
             throw new HdfsException("Cannot find Hadoop job parameters.", e);
         } catch (HdfsException e) {

@@ -94,7 +94,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             clusterer = ReflectionUtils.instantiate(clustererClassName, Clusterer.class);
             logger.debug("Using class ["
                          + clusterer.getClass().getName()
-                         + " for clustering data objects.");
+                         + "] for clustering data objects.");
         } catch (ReflectionUtilsException e) {
             throw new RuntimeException(e);
         }

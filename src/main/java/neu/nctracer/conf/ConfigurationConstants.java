@@ -17,15 +17,12 @@ public final class ConfigurationConstants {
     /* Hadoop configuration parameters */
     public static final String HADOOP_HOME = "hadoop.home";
     public static final String HADOOP_CONF_DIR = "hadoop.conf.path";
-    public static final String DELETE_HDFS_DIRS = "delete.hdfs.dirs";
 
-    public static final String HDFS_INPUT_DIR = "hadoop.input.dir";
-    public static final String HDFS_OUTPUT_DIR = "hadoop.output.dir";
-    public static final String HDFS_SOURCE_IMAGE_PATH = "hadoop.image.source.file";
-    public static final String HDFS_TARGET_IMAGE_FILE = "hadoop.image.target.file";
+    // HDFS configurations
+    public static final String HDFS_BASE_DIR = "hadoop.main.dir";
+    public static final String DELETE_HDFS_DIRS = "hdfs.dirs.delete";
 
     public static final String GNUPLOT_PATH = "gnuplot.process.path";
-
     public static final String GNUPLOT_OUTPUT_PATH = "gnuplot.output.path";
 
     private ConfigurationConstants() {
