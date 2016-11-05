@@ -1,7 +1,7 @@
 package neu.nctracer.dm;
 
 /**
- * Provides mechanism to inject some implementation of
+ * Provides mechanism to inject an implementation of
  * {@linkplain ConfigurationParams} to all the requesting classes
  * 
  * @author Ankur Shanbhag

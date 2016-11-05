@@ -10,6 +10,21 @@ import neu.nctracer.exception.ReflectionUtilsException;
  */
 public class ReflectionUtils {
 
+    /**
+     * The methods creates an instance of the class specified by className
+     * param. The className should be of type param.<br>
+     * For example: To instantiate class <code>foo</code> which is of type
+     * <code>bar</code> call - <br>
+     * <code>xyz.bar instance = ReflectionUtils.instantiate("foo", bar.class)</code>
+     * 
+     * @param className
+     *            - fully qualifies className of the class to be instantiated
+     * @param type
+     *            - Type of className
+     * @return - instance of className reference by type
+     * @throws ReflectionUtilsException
+     *             - If instantiation fails or class cannot be found
+     */
     public static <T> T instantiate(String className,
                                     Class<T> type) throws ReflectionUtilsException {
         try {
@@ -25,6 +40,15 @@ public class ReflectionUtils {
         }
     }
 
+    /**
+     * Returns a class descriptor for the specified class name, referenced by
+     * type
+     * 
+     * @param className
+     * @param type
+     * @return
+     * @throws ReflectionUtilsException
+     */
     @SuppressWarnings("unchecked")
     public static <T> Class<T> getClass(String className,
                                         Class<T> type) throws ReflectionUtilsException {
