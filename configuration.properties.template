@@ -1,0 +1,21 @@
+# Make a copy of this file with the name 'configuration.properties'
+# Configurations to be filled by the user
+
+# Hadoop configurations
+hadoop.home=[hadoop installation dir]
+hadoop.conf.path=[hadoop configuration dir containing xml files]
+error.threshold=[number value]
+
+# Hdfs configurations
+hdfs.main.dir=[hdfs or s3 bucket path]
+hdfs.dirs.delete=[true|false]
+
+# Local configurations
+local.image.source.file=[source image stack path on local machine]
+local.image.target.file=[target image stack path on local machine]
+local.log.output.dir=logs
+
+# data plotting configurations
+gnuplot.process.path=[gnuplot executable path on loal machine]
+gnuplot.output.path=[gnuplot output file]
+
