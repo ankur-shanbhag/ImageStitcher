@@ -7,7 +7,7 @@ package neu.nctracer.conf;
  */
 public final class ConfigurationConstants {
 
-    public static final String PROJECT_BASE_DIR = "base.project.path";
+    public static final String PROJECT_BASE_DIR = "project.base.path";
 
     public static final String LOCAL_SOURCE_IMAGE_FILE = "local.image.source.file";
     public static final String LOCAL_TARGET_IMAGE_FILE = "local.image.target.file";
@@ -29,3 +29,4 @@ public final class ConfigurationConstants {
         // Deny object creation
     }
 }
+

@@ -30,8 +30,6 @@ import neu.nctracer.dm.cluster.DataCluster;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
-import neu.nctracer.log.LogManager;
-import neu.nctracer.log.Logger;
 import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
@@ -78,7 +76,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private Clusterer clusterer = null;
 
-    private Logger logger = LogManager.getLogManager().getDefaultLogger();
+    private org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ImageDataClusteringMapper.class);
 
     @Override
     protected void
@@ -384,3 +382,4 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         return builder.toString();
     }
 }
+

@@ -190,7 +190,10 @@ public class ImageStitchingDriver implements ImageStitcher {
 
     private String cacheLocalJars(String projectHome, FileSystem fs) {
         StringBuilder builder = new StringBuilder();
-        File libDir = new File(projectHome, "/lib");
+        File libDir = new File(projectHome, "/target/lib");
+        if (!libDir.isDirectory())
+            return null;
+
         for (File file : libDir.listFiles()) {
             if (!file.getName().endsWith(".jar"))
                 continue;
@@ -205,3 +208,4 @@ public class ImageStitchingDriver implements ImageStitcher {
         return builder.toString();
     }
 }
+
