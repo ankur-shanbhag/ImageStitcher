@@ -1,30 +1,12 @@
 package neu.nctracer.data.plot;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import neu.nctracer.conf.ConfigurationConstants;
-import neu.nctracer.conf.ConfigurationManager;
-import neu.nctracer.data.DataObject;
-import neu.nctracer.exception.ConfigurationException;
-import neu.nctracer.exception.DataPlotException;
-import neu.nctracer.exception.InvalidConfigKeyException;
-import neu.nctracer.log.LogManager;
-import neu.nctracer.log.Logger;
-
 /**
  * Invokes underlying Gnuplot process to plot data points for visualization.
  * 
  * @author Ankur Shanbhag
  *
  */
+/*
 public class GnuPlotter implements DataPlotter {
 
     private Logger logger = LogManager.getLogManager().getDefaultLogger();
@@ -137,4 +119,5 @@ public class GnuPlotter implements DataPlotter {
         File file = new File(filePath);
         return file.isFile() ? file.delete() : false;
     }
-}
+}*/
+

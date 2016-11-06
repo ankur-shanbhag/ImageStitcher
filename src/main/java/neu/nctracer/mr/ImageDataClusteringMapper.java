@@ -108,8 +108,8 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         logger.debug("Successfully read target data file from location : " + targetFilePath);
 
         try {
-            sourceImageData = DataParser.parseImageData(sourceFileData, ImageData.class);
-            targetImageData = DataParser.parseImageData(targetFileData, ImageData.class);
+            sourceImageData = DataParser.parseData(sourceFileData, ImageData.class);
+            targetImageData = DataParser.parseData(targetFileData, ImageData.class);
         } catch (ParsingException e) {
             throw new IOException("Error while parsing image data.", e);
         }
@@ -155,13 +155,7 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         List<DataObject> transformations = groupTransformations(allTransformations,
                                                                 sourceClusters,
                                                                 targetClusters);
-        for (DataObject transform : transformations) {
-            if (transform instanceof DataTransformation) {
-                DataTransformation<DataCluster> dataTranslation = (DataTransformation<DataCluster>) transform;
-                TEXT_KEY.set(toString(dataTranslation.getCorrespondences()));
-                context.write(TEXT_KEY, NullWritable.get());
-            }
-        }
+        emitCorrespondences(context, transformations);
 
         logger.info("Successfully performed map phase for input : " + value);
     }
@@ -371,6 +365,22 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             relativeMovementMap.put(point, movement);
         }
         return relativeMovementMap;
+    }
+
+    private void emitCorrespondences(Context context,
+                                     List<DataObject> transformations) throws IOException,
+                                                                       InterruptedException {
+        for (DataObject transform : transformations) {
+            if (transform instanceof DataTransformation) {
+                @SuppressWarnings("unchecked")
+                DataTransformation<DataCluster> dataTranslation = (DataTransformation<DataCluster>) transform;
+                Set<DataCorrespondence> correspondences = dataTranslation.getCorrespondences();
+                for (DataCorrespondence correspondence : correspondences) {
+                    TEXT_KEY.set(correspondence.toString());
+                    context.write(TEXT_KEY, NullWritable.get());
+                }
+            }
+        }
     }
 
     private <T> String toString(Collection<T> points) {

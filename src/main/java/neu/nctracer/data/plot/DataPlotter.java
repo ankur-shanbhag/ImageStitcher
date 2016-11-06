@@ -2,7 +2,7 @@ package neu.nctracer.data.plot;
 
 import java.util.List;
 
-import neu.nctracer.data.DataObject;
+import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.exception.DataPlotException;
 
 /**
@@ -13,5 +13,8 @@ import neu.nctracer.exception.DataPlotException;
  */
 public interface DataPlotter {
 
-    void scatterPlot(List<List<DataObject>> data, boolean printFile) throws DataPlotException;
+    void scatterPlot(List<DataCorrespondence> data,
+                     boolean plot3D,
+                     boolean plotSideBySide) throws DataPlotException;
 }
+

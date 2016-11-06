@@ -11,16 +11,15 @@ public final class DataParser {
     private static final String WHITE_SPACE_RECORD_SPLITTER = "\\s+";
     private static final String LINE_SPLITTER = "\\r?\\n";
 
-    public static Collection<DataObject> parseImageData(String data,
-                                                        Class<? extends DataObject> clazz)
-                                                        throws ParsingException {
-        return parseImageData(data, WHITE_SPACE_RECORD_SPLITTER, clazz);
+    public static Collection<DataObject>
+           parseData(String data, Class<? extends DataObject> clazz) throws ParsingException {
+        return parseData(data, WHITE_SPACE_RECORD_SPLITTER, clazz);
     }
 
-    public static Collection<DataObject> parseImageData(String data,
-                                                        String recordSplitter,
-                                                        Class<? extends DataObject> clazz)
-                                                        throws ParsingException {
+    public static Collection<DataObject>
+           parseData(String data,
+                     String recordSplitter,
+                     Class<? extends DataObject> clazz) throws ParsingException {
         Collection<DataObject> parsedData = new ArrayList<>();
         String[] lines = data.split(LINE_SPLITTER);
         for (String line : lines) {
@@ -39,11 +38,15 @@ public final class DataParser {
             } catch (NumberFormatException exp) {
                 throw new ParsingException("Error while parsing record [" + line + "]", exp);
             } catch (InstantiationException e) {
-                throw new ParsingException(
-                        "Error instantiating class [" + clazz.getName() + "]", e);
+                throw new ParsingException("Error instantiating class ["
+                                           + clazz.getName()
+                                           + "]",
+                                           e);
             } catch (IllegalAccessException e) {
-                throw new ParsingException(
-                        "Error instantiating class [" + clazz.getName() + "]", e);
+                throw new ParsingException("Error instantiating class ["
+                                           + clazz.getName()
+                                           + "]",
+                                           e);
             }
         }
         return parsedData;

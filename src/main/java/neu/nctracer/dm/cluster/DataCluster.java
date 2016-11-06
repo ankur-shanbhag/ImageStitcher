@@ -17,7 +17,7 @@ public class DataCluster implements Comparable<DataCluster> {
     private final List<DataObject> cluster;
 
     /**
-     * Randomly assigns UUID as a group id
+     * Generates a unique ID for the cluster
      * 
      * @param cluster
      */
@@ -66,7 +66,7 @@ public class DataCluster implements Comparable<DataCluster> {
 
     @Override
     public String toString() {
-        return super.toString();
+        return "Cluster ID - " + clusterId + ", Cluster - " + cluster;
     }
 
     @Override
@@ -74,3 +74,4 @@ public class DataCluster implements Comparable<DataCluster> {
         throw new RuntimeException("Not yet implemented ...");
     }
 }
+

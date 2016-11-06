@@ -8,13 +8,13 @@ package neu.nctracer.data.plot;
  */
 public class DataPlotManager {
 
-    private DataPlotter plotter = null;
+    private static DataPlotter defaultPlotter = new JavaPlotter();
 
     private DataPlotManager() {
-        this.plotter = new GnuPlotter();
     }
 
-    public DataPlotter getDefaultPlotter() {
-        return this.plotter;
+    public static DataPlotter getDefaultPlotter() {
+        return defaultPlotter;
     }
 }
+

@@ -19,9 +19,9 @@ import neu.nctracer.exception.ParsingException;
  * <tt>org.apache.commons.math3.ml.clustering.DBSCANClusterer</tt> to form
  * density based clusters<br>
  * 
- * @see <a href=
- *      "https://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/ml/clustering/package-summary.html">
- *      DBSCANClusterer</a>
+ * @see <a>
+ *      https://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/ml/clustering/package-summary.html
+ *      </a>
  *
  * 
  * @author Ankur Shanbhag
@@ -76,5 +76,4 @@ public class DBSCANCluster implements Clusterer {
 
         return clusters;
     }
-
 }
