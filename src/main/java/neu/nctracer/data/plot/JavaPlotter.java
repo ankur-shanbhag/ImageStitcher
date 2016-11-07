@@ -8,6 +8,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -58,8 +59,10 @@ public class JavaPlotter implements DataPlotter {
                             boolean plot3d,
                             boolean plotSideBySide) throws DataPlotException {
 
-        JPlot sourcePlot = createPlot(plot3d);
-        JPlot targetPlot = createPlot(plot3d);
+        String gnuplotExec = getGnuPlotExecutablePath();
+
+        JPlot sourcePlot = createPlot(gnuplotExec, plot3d, "Source");
+        JPlot targetPlot = createPlot(gnuplotExec, plot3d, "Target");
 
         for (int i = 0; i < correspondences.size(); i++) {
             DataCorrespondence correspondence = correspondences.get(i);
@@ -130,7 +133,7 @@ public class JavaPlotter implements DataPlotter {
         double[][] data = { obj.getFeatures() };
 
         DataSetPlot dataPlot = new DataSetPlot(data);
-        dataPlot.setTitle(title);
+        dataPlot.setTitle(Arrays.toString(obj.getFeatures()));
         // dataPlot.setPlotStyle(plotStyle);
 
         JavaPlot p = plot.getJavaPlot();
@@ -146,26 +149,34 @@ public class JavaPlotter implements DataPlotter {
         return myStyle;
     }
 
-    private JPlot createPlot(boolean plot3d) {
+    private JPlot createPlot(String gnuplotExec, boolean plot3d, String title) {
 
+        JavaPlot javaPlot = new JavaPlot(gnuplotExec, plot3d);
+        final JPlot plot = new JPlot(javaPlot);
+        final JavaPlot p = plot.getJavaPlot();
+        p.setTitle(title);
+
+        addMouseListernerForRotation(plot);
+        setPlotProperties(p, plot3d);
+        return plot;
+    }
+
+    private String getGnuPlotExecutablePath() throws DataPlotException {
         String gnuplotExec = null;
         try {
             gnuplotExec = ConfigurationManager.getConfigurationManager()
                                               .getConfig(ConfigurationConstants.GNUPLOT_PATH);
             logger.info("GnuPlot executable path set to - " + gnuplotExec);
-        } catch (InvalidConfigKeyException | ConfigurationException e) {
+        } catch (InvalidConfigKeyException e) {
+            // set to default
             gnuplotExec = GNUPLOT_EXEC_DEFAULT_LOCATION;
             logger.info("GnuPlot executable path not set by the user. Using default path - "
                         + gnuplotExec);
+        } catch (ConfigurationException e) {
+            logger.error("Error initializing configuration manager.", e);
+            throw new DataPlotException(e);
         }
-
-        JavaPlot javaPlot = new JavaPlot(gnuplotExec, plot3d);
-        final JPlot plot = new JPlot(javaPlot);
-        final JavaPlot p = plot.getJavaPlot();
-
-        addMouseListernerForRotation(plot);
-        setPlotProperties(p, plot3d);
-        return plot;
+        return gnuplotExec;
     }
 
     private static void setPlotProperties(final JavaPlot p, boolean plot3d) {
@@ -226,3 +237,4 @@ public class JavaPlotter implements DataPlotter {
         });
     }
 }
+
