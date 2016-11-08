@@ -9,7 +9,6 @@ import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import neu.nctracer.data.DataObject;
 import neu.nctracer.dm.ConfigurationParams;
-import neu.nctracer.exception.ParsingException;
 
 /**
  * Implementation for DBSCAN algorithm for clustering the data points with
@@ -41,14 +40,14 @@ public class DBSCANCluster implements Clusterer {
     private int minPoints;
 
     @Override
-    public void setup(ConfigurationParams params) throws ParsingException {
+    public void setup(ConfigurationParams params) throws IllegalArgumentException {
         try {
             this.minPoints = Integer.parseInt(params.getParam("minpoints"));
             this.eps = Double.parseDouble(params.getParam("eps"));
         } catch (NumberFormatException nfe) {
-            throw new ParsingException("Error parsing params [minpoints, eps]. Configuration parameters received "
-                                       + params.toString(),
-                                       nfe);
+            throw new IllegalArgumentException("Error parsing params [minpoints, eps]. Configuration parameters received "
+                                               + params.toString(),
+                                               nfe);
         }
     }
 

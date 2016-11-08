@@ -17,5 +17,8 @@ public interface ConfigurationParams {
 
     void setParams(Map<String, String> params);
 
+    void setParam(String name, String value);
+
     String getParam(String name);
 }
+

@@ -180,24 +180,17 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             if (targetLookup.size() < 2)
                 return;
 
-            try {
-                Map<String, String> configMap = new HashMap<>();
-                configMap.put("minpoints", "2");
-                configMap.put("eps", "20");
+            ConfigurationParams params = configParamHandler.getConfigurationParamsInstance();
+            params.setParam("minpoints", "2");
+            params.setParam("eps", "20");
 
-                ConfigurationParams params = configParamHandler.getConfigurationParamsInstance();
-                params.setParams(configMap);
+            clusterer.setup(params);
+            List<DataCluster> clusters = clusterer.createClusters(targetLookup.values());
 
-                clusterer.setup(params);
-                List<DataCluster> clusters = clusterer.createClusters(targetLookup.values());
-
-                List<DataObject> list = findOptimum(clusters, clusterList);
-                if (list != clusterList) {
-                    clusterList.clear();
-                    clusterList.addAll(list);
-                }
-            } catch (ParsingException e) {
-                throw new RuntimeException(e);
+            List<DataObject> list = findOptimum(clusters, clusterList);
+            if (list != clusterList) {
+                clusterList.clear();
+                clusterList.addAll(list);
             }
             return;
         }

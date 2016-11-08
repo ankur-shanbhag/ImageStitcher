@@ -16,6 +16,9 @@ public class DefaultConfigurationParams implements ConfigurationParams {
 
     private Map<String, String> configMap = new HashMap<>();
 
+    /**
+     * Overwrites all the parameters previously set in this object
+     */
     @Override
     public void parseParams(String paramStr, String delimiter) throws ParsingException {
         this.configMap = new HashMap<>();
@@ -31,9 +34,18 @@ public class DefaultConfigurationParams implements ConfigurationParams {
         }
     }
 
+    /**
+     * Overwrites all the parameters previously set in the object
+     */
     @Override
     public void setParams(Map<String, String> params) {
+        // create a defensive copy to avoid referencing issues
         this.configMap = new HashMap<>(params);
+    }
+
+    @Override
+    public void setParam(String name, String value) {
+        this.configMap.put(name, value);
     }
 
     @Override
@@ -47,3 +59,4 @@ public class DefaultConfigurationParams implements ConfigurationParams {
     }
 
 }
+
