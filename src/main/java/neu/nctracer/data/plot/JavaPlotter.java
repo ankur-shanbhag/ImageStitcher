@@ -179,7 +179,7 @@ public class JavaPlotter implements DataPlotter {
         return gnuplotExec;
     }
 
-    private static void setPlotProperties(final JavaPlot p, boolean plot3d) {
+    private void setPlotProperties(final JavaPlot p, boolean plot3d) {
         if (plot3d) {
             p.newGraph3D();
             p.getAxis("z").setLabel(Z_AXIS_LABEL);
@@ -195,7 +195,7 @@ public class JavaPlotter implements DataPlotter {
         p.set("rmargin at screen", "0.75");
     }
 
-    private static void addMouseListernerForRotation(final JPlot plot) {
+    private void addMouseListernerForRotation(final JPlot plot) {
         plot.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseMoved(MouseEvent e) {
