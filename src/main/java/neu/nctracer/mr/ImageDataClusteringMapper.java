@@ -22,6 +22,7 @@ import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.ImageData;
+import neu.nctracer.data.Match;
 import neu.nctracer.dm.ConfigurationParams;
 import neu.nctracer.dm.DMConfigurationHandler;
 import neu.nctracer.dm.cluster.Clusterer;
@@ -136,14 +137,19 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         List<DataCluster> targetClusters = clusterer.createClusters(targetImageData);
 
         List<List<DataTransformation<DataCluster>>> allTransformations = new ArrayList<>();
+        Map<DataTransformation<DataCluster>, Match> resultMap = new HashMap<>();
 
         for (DataCluster sourceCluster : sourceClusters) {
             List<DataTransformation<DataCluster>> list = new ArrayList<>();
             for (DataCluster targetCluster : targetClusters) {
-                DataTransformation<DataCluster> tranformation = computeCorrespondences(sourceCluster,
-                                                                                       targetCluster);
-                if (tranformation.getCorrespondences().size() > 1)
-                    list.add(tranformation);
+
+                DataTransformation<DataCluster> transformation = defineTranslation(sourceCluster,
+                                                                                   targetCluster);
+                Match match = computeCorrespondences(sourceCluster, targetCluster);
+
+                resultMap.put(transformation, match);
+                if (match.getCorrespondences().size() > 1)
+                    list.add(transformation);
             }
             if (!list.isEmpty())
                 allTransformations.add(list);
@@ -152,18 +158,14 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         if (allTransformations.size() < 2)
             return;
 
-        List<DataObject> transformations = groupTransformations(allTransformations,
-                                                                sourceClusters,
-                                                                targetClusters);
-        emitCorrespondences(context, transformations);
+        List<DataObject> transformations = groupTransformations(allTransformations);
+        emitCorrespondences(context, transformations, resultMap);
 
         logger.info("Successfully performed map phase for input : " + value);
     }
 
-    private List<DataObject> groupTransformations(
-                                                  List<List<DataTransformation<DataCluster>>> transformations,
-                                                  List<DataCluster> sourceClusters,
-                                                  List<DataCluster> targetClusters) {
+    private List<DataObject>
+            groupTransformations(List<List<DataTransformation<DataCluster>>> transformations) {
         Map<DataCluster, DataObject> targetLookup = new HashMap<>();
         List<DataObject> clusterList = new ArrayList<>();
         groupTransformations(transformations, targetLookup, 0, clusterList);
@@ -245,10 +247,39 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         return (null == optimum || err < minErr) ? clusterList : optimum.getDataPoints();
     }
 
-    private DataTransformation<DataCluster> computeCorrespondences(DataCluster sourceCluster,
-                                                                   DataCluster targetCluster) {
+    private Match computeCorrespondences(DataCluster sourceCluster, DataCluster targetCluster) {
 
-        // compute centroids as arithmetic mean of all points in the cluster
+        // compute centroids as arithmetic mean of all points in the
+        // cluster
+        DataObject sourceCentroid = new ImageData();
+        sourceCentroid.setFeatures(DataTransformer.computeArithmeticMean(sourceCluster.getDataPoints()));
+
+        DataObject targetCentroid = new ImageData();
+        targetCentroid.setFeatures(DataTransformer.computeArithmeticMean(targetCluster.getDataPoints()));
+
+        // find relative position for all the points from the centroids and plot
+        // in target space
+        Map<DataObject, double[]> relativeMovementMap = relativePositions(sourceCluster,
+                                                                          sourceCentroid);
+        Map<DataObject, DataObject> translatedObjMapping = movePoints(targetCentroid,
+                                                                      relativeMovementMap);
+
+        // find correspondences between mapped source points and target points
+        Set<DataCorrespondence> correspondences = findCorrespondences(translatedObjMapping,
+                                                                      targetCluster);
+        Match result = new Match();
+        result.setCorrespondences(correspondences);
+        return result;
+    }
+
+    /**
+     * Define translation between 2 input clusters based on the center points
+     */
+    private DataTransformation<DataCluster> defineTranslation(DataCluster sourceCluster,
+                                                              DataCluster targetCluster) {
+
+        // compute centroids as arithmetic mean of all points in the
+        // cluster
         DataObject sourceCentroid = new ImageData();
         sourceCentroid.setFeatures(DataTransformer.computeArithmeticMean(sourceCluster.getDataPoints()));
 
@@ -264,18 +295,6 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         transformation.setTranslationObjects(sourceCluster, targetCluster);
         transformation.setAngles(angles);
         transformation.setDistance(distance);
-
-        // find relative position for all the points from the centroids and plot
-        // in target space
-        Map<DataObject, double[]> relativeMovementMap = relativePositions(sourceCluster,
-                                                                          sourceCentroid);
-        Map<DataObject, DataObject> translatedObjMapping = movePoints(targetCentroid,
-                                                                      relativeMovementMap);
-
-        // find correspondences between mapped source points and target points
-        Set<DataCorrespondence> correspondences = findCorrespondences(translatedObjMapping,
-                                                                      targetCluster);
-        transformation.setCorrespondences(correspondences);
         return transformation;
     }
 
@@ -360,29 +379,21 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         return relativeMovementMap;
     }
 
-    private void emitCorrespondences(Context context,
-                                     List<DataObject> transformations) throws IOException,
-                                                                       InterruptedException {
+    private void
+            emitCorrespondences(Context context,
+                                List<DataObject> transformations,
+                                Map<DataTransformation<DataCluster>, Match> resultMap) throws IOException,
+                                                                                       InterruptedException {
         for (DataObject transform : transformations) {
             if (transform instanceof DataTransformation) {
-                @SuppressWarnings("unchecked")
-                DataTransformation<DataCluster> dataTranslation = (DataTransformation<DataCluster>) transform;
-                Set<DataCorrespondence> correspondences = dataTranslation.getCorrespondences();
+                Match match = resultMap.get(transform);
+                Set<DataCorrespondence> correspondences = match.getCorrespondences();
                 for (DataCorrespondence correspondence : correspondences) {
                     TEXT_KEY.set(correspondence.toString());
                     context.write(TEXT_KEY, NullWritable.get());
                 }
             }
         }
-    }
-
-    private <T> String toString(Collection<T> points) {
-        StringBuilder builder = new StringBuilder();
-        for (T point : points) {
-            builder.append(point).append("|");
-        }
-        builder.delete(builder.length() - 1, builder.length());
-        return builder.toString();
     }
 }
 

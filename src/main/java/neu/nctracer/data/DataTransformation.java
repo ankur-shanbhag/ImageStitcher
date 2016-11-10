@@ -1,7 +1,6 @@
 package neu.nctracer.data;
 
 import java.util.Arrays;
-import java.util.Set;
 
 /**
  * Defines translation between entities defined by parameters of type
@@ -18,8 +17,6 @@ public class DataTransformation<T> implements DataObject {
     private T targetObj;
     private double[] angles;
     private double distance;
-
-    private Set<DataCorrespondence> correspondences;
 
     public void setTranslationObjects(T sourceObj, T targetObj) {
         this.sourceObj = sourceObj;
@@ -48,14 +45,6 @@ public class DataTransformation<T> implements DataObject {
 
     public void setDistance(double distance) {
         this.distance = distance;
-    }
-
-    public Set<DataCorrespondence> getCorrespondences() {
-        return correspondences;
-    }
-
-    public void setCorrespondences(Set<DataCorrespondence> correspondences) {
-        this.correspondences = correspondences;
     }
 
     @Override
@@ -110,3 +99,4 @@ public class DataTransformation<T> implements DataObject {
         return getAngles();
     }
 }
+
