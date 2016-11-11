@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import neu.nctracer.data.DataObject;
-import neu.nctracer.dm.ConfigurationParams;
+import neu.nctracer.dm.conf.ConfigurationParams;
 
 /**
  * Contract for all classes implementing clustering algorithms

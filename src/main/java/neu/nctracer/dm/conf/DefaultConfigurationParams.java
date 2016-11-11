@@ -1,4 +1,4 @@
-package neu.nctracer.dm;
+package neu.nctracer.dm.conf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,5 +58,20 @@ public class DefaultConfigurationParams implements ConfigurationParams {
         return configMap.toString();
     }
 
-}
+    @Override
+    public String getParam(String param, String defaultValue) {
+        String value = configMap.get(param);
 
+        // return default, if not found
+        if (null == value || value.isEmpty())
+            return defaultValue;
+
+        return value;
+    }
+
+    @Override
+    public Map<String, String> getParams() {
+        return new HashMap<>(this.configMap);
+    }
+
+}

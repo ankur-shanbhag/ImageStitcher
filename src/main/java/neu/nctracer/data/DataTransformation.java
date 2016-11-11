@@ -98,5 +98,10 @@ public class DataTransformation<T> implements DataObject {
     public double[] getFeatures() {
         return getAngles();
     }
+
+    @Override
+    public DataObject deepClone() {
+        throw new RuntimeException("Not implemented...");
+    }
 }
 

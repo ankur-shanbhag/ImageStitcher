@@ -82,4 +82,12 @@ public class ImageData implements DataObject {
         return 0;
     }
 
+    @Override
+    public ImageData deepClone() {
+        ImageData clone = new ImageData();
+        double[] clonedFeatures = Arrays.copyOf(this.getFeatures(), this.getDimension());
+        clone.setFeatures(clonedFeatures);
+        return clone;
+    }
+
 }

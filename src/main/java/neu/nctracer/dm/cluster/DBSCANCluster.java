@@ -8,7 +8,7 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import neu.nctracer.data.DataObject;
-import neu.nctracer.dm.ConfigurationParams;
+import neu.nctracer.dm.conf.ConfigurationParams;
 
 /**
  * Implementation for DBSCAN algorithm for clustering the data points with

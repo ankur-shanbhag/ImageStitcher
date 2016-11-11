@@ -1,4 +1,4 @@
-package neu.nctracer.dm;
+package neu.nctracer.dm.conf;
 
 /**
  * Provides mechanism to inject an implementation of

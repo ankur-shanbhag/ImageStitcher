@@ -15,4 +15,9 @@ public interface DataObject extends Comparable<DataObject>, Clusterable {
 
     double[] getFeatures();
 
+    DataObject deepClone();
+
+    int hashCode();
+
+    boolean equals(Object obj);
 }

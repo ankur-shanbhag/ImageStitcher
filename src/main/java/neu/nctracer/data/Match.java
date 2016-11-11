@@ -2,7 +2,13 @@ package neu.nctracer.data;
 
 import java.util.Set;
 
-public class Match {
+/**
+ * Holds all the matching correspondences with error in the match
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
+public class Match implements Comparable<Match> {
 
     private Set<DataCorrespondence> correspondences;
     private double error;
@@ -45,5 +51,13 @@ public class Match {
         if (Double.doubleToLongBits(error) != Double.doubleToLongBits(other.error))
             return false;
         return true;
+    }
+
+    /**
+     * Comparison based on the error value
+     */
+    @Override
+    public int compareTo(Match other) {
+        return Double.valueOf(this.getError()).compareTo(Double.valueOf(other.getError()));
     }
 }
