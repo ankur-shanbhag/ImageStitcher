@@ -1,23 +1,20 @@
 package neu.nctracer.log;
 
-import java.net.URL;
-
 import org.apache.log4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
 
 /**
- * Default logger implementation for {@linkplain neu.nctracer.log.Logger}
+ * Logger class to be used by all the classes part of map-reduce program
  * 
  * @author Ankur Shanbhag
  *
  */
-class DefaultLogger extends AbstractLogger {
-    private Logger logger;
+public class MapReducerLogger extends AbstractLogger {
 
-    DefaultLogger(URL url) {
-        super(DefaultLogger.class);
-        DOMConfigurator.configure(url);
-        logger = Logger.getLogger(DefaultLogger.class);
+    private final Logger logger;
+
+    MapReducerLogger() {
+        super(MapReducerLogger.class);
+        logger = Logger.getLogger(MapReducerLogger.class);
     }
 
     @Override
@@ -60,4 +57,3 @@ class DefaultLogger extends AbstractLogger {
         logger.fatal(constructMessage(message), t);
     }
 }
-

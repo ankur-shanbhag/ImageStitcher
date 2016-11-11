@@ -25,7 +25,8 @@ public class Client {
         final String localInputPath = args[0];
         final String localOutputPath = args[1];
 
-        Logger logger = LogManager.getLogManager().getDefaultLogger();
+        Logger logger = LogManager.createLogger("default");
+        LogManager.getLogManager().setDefaultLogger(logger);
 
         try {
             // Invoke one of many image stitching implementations. Can be made
@@ -47,3 +48,4 @@ public class Client {
         System.exit(-1);
     }
 }
+

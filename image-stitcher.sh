@@ -26,6 +26,12 @@ function build_image_stitcher()
 function plot_data()
 {
    outputFilePath=$1
+   if [[ -z "$outputFilePath" ]]; then
+      echo "Please specify file path to read data points"
+      echo "Usage: image-stitcher.sh plot /home/user/points"
+      exit 0     
+   fi
+
    mvn dependency:build-classpath -Dmdep.outputFile=classpath.tmp > /dev/null
    java -cp target/image-stitcher-1.0.jar:`cat classpath.tmp` neu.nctracer.data.plot.Client $outputFilePath true false
 

@@ -41,7 +41,8 @@ public class Client {
         if (args.length >= 3)
             plotSideBySide = Boolean.valueOf(args[2]);
 
-        Logger logger = LogManager.getLogManager().getDefaultLogger();
+        Logger logger = LogManager.createLogger("default");
+        LogManager.getLogManager().setDefaultLogger(logger);
 
         try {
             logger.info("Generating 3-D plot for correspondences");
@@ -86,3 +87,4 @@ public class Client {
         return list;
     }
 }
+

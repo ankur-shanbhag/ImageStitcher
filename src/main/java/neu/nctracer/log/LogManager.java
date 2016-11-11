@@ -17,19 +17,39 @@ public class LogManager {
     private Logger defaultLogger;
 
     private LogManager() {
-        URL url = LogManager.class.getResource("/log4j.xml");
-        defaultLogger = new DefaultLogger(url);
     }
 
     public static LogManager getLogManager() {
         return logManager;
     }
 
+    public static Logger createLogger(String type) {
+        switch (type) {
+        case "default":
+            URL url = LogManager.class.getResource("/log4j.xml");
+            Logger logger = new DefaultLogger(url);
+            return logger;
+
+        case "mr":
+            Logger mapReducerLogger = new MapReducerLogger();
+            return mapReducerLogger;
+        }
+
+        throw new IllegalArgumentException("Provided className [" + type + "]");
+    }
+
+    /**
+     * Set default logger to be used by entire application
+     * 
+     * @param logger
+     *            - logger to be set as default
+     */
     public void setDefaultLogger(Logger logger) {
         this.defaultLogger = logger;
     }
 
     public Logger getDefaultLogger() {
-        return defaultLogger;
+        return this.defaultLogger;
     }
 }
+

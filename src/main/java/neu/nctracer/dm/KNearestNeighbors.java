@@ -12,6 +12,8 @@ import java.util.TreeMap;
 
 import neu.nctracer.data.DataObject;
 import neu.nctracer.dm.conf.ConfigurationParams;
+import neu.nctracer.log.LogManager;
+import neu.nctracer.log.Logger;
 import neu.nctracer.utils.DataTransformer;
 
 /**
@@ -32,6 +34,8 @@ public class KNearestNeighbors implements NearestNeighbors {
     private List<DataObject> dataObjects;
     private double maxDistance;
 
+    private Logger logger = LogManager.getLogManager().getDefaultLogger();
+
     @Override
     public void setup(List<DataObject> dataObjects, ConfigurationParams params) {
         this.dataObjects = dataObjects;
@@ -43,7 +47,8 @@ public class KNearestNeighbors implements NearestNeighbors {
             // set to very large value, so that neighbors are not pruned
             this.maxDistance = Double.MAX_VALUE;
         }
-        System.out.println("maxDistance ::: " + maxDistance);
+
+        logger.debug("Setting maxDistance threshold to " + this.maxDistance);
     }
 
     /**

@@ -31,6 +31,8 @@ import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
+import neu.nctracer.log.LogManager;
+import neu.nctracer.log.Logger;
 import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
@@ -77,12 +79,15 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private Clusterer clusterer = null;
 
-    private org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(ImageDataClusteringMapper.class);
+    private Logger logger = null;
 
     @Override
     protected void
               setup(Mapper<LongWritable, Text, Text, NullWritable>.Context context) throws IOException,
                                                                                     InterruptedException {
+        this.logger = LogManager.createLogger("mr");
+        LogManager.getLogManager().setDefaultLogger(logger);
+
         super.setup(context);
 
         Configuration conf = context.getConfiguration();
