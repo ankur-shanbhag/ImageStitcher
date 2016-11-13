@@ -140,7 +140,8 @@ public class ImageStitchingDriver implements ImageStitcher {
                             + job.getJobID()
                             + "] completed successfully.");
                 HdfsFileUtils.copyToLocal(hdfsOutputPath, outputPath, conf);
-                logger.debug("HDFS output files copied to local file system - " + outputPath);
+                logger.info("HDFS output files copied to local file system at location - "
+                            + new File(outputPath).getAbsolutePath());
             } else {
                 logger.error("Mapreduce job terminated with errors. Check hadoop logs for details.");
             }
