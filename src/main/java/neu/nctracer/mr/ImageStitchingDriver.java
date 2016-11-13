@@ -136,7 +136,9 @@ public class ImageStitchingDriver implements ImageStitcher {
             logger.info("Starting mapreduce job to perform image stitching operation.");
             boolean status = job.waitForCompletion(true);
             if (status) {
-                logger.info("Mapreduce job completed successfully.");
+                logger.info("Mapreduce job with id ["
+                            + job.getJobID()
+                            + "] completed successfully.");
                 HdfsFileUtils.copyToLocal(hdfsOutputPath, outputPath, conf);
                 logger.debug("HDFS output files copied to local file system - " + outputPath);
             } else {

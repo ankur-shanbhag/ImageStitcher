@@ -14,6 +14,7 @@ import neu.nctracer.data.Match;
 import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.ReflectionUtilsException;
+import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.ReflectionUtils;
 
 public class TranslationMatchCalculator implements MatchCalculator {
@@ -89,12 +90,15 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
         Map<DataObject, DataObject> translatedObjects = translateSourceObjects(source, transform);
 
+        Map<DataObject, DataObject> pruneTranslatedObjects = pruneTranslatedObjects(translatedObjects,
+                                                                                    target);
+
         this.nearestNeighbors.setup(target, this.params);
 
         Set<DataCorrespondence> correspondences = new HashSet<>();
 
         double error = 0;
-        for (Entry<DataObject, DataObject> entry : translatedObjects.entrySet()) {
+        for (Entry<DataObject, DataObject> entry : pruneTranslatedObjects.entrySet()) {
             Map<DataObject, Double> neighbors = this.nearestNeighbors.findNeighbors(entry.getValue(),
                                                                                     1);
             if (null == neighbors || neighbors.isEmpty()) {
@@ -102,8 +106,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
             }
             Entry<DataObject, Double> neighbor = neighbors.entrySet().iterator().next();
 
-            // TODO: accommodate error for missing points
-            error += neighbor.getValue();
+            error += (neighbor.getValue() * neighbor.getValue());
             DataCorrespondence correspondence = new DataCorrespondence(entry.getKey(),
                                                                        neighbor.getKey());
             correspondences.add(correspondence);
@@ -111,9 +114,35 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
         Match match = new Match();
         match.setCorrespondences(correspondences);
-        match.setError(error / correspondences.size());
+        error = (error == 0 || correspondences.size() == 0) ? error
+                                                            : error / correspondences.size();
+        match.setError(error);
 
         return match;
+    }
+
+    private Map<DataObject, DataObject> pruneTranslatedObjects(
+                                                               Map<DataObject, DataObject> translatedObjects,
+                                                               List<DataObject> target) {
+        Map<DataObject, DataObject> prunedTranslatedObjects = new HashMap<>();
+        double[] minValues = DataTransformer.computeMinValues(target);
+
+        for (Entry<DataObject, DataObject> entry : translatedObjects.entrySet()) {
+            double[] translatedFeatures = entry.getValue().getFeatures();
+            boolean pruneTranslatedObject = false;
+            for (int i = 0; i < translatedFeatures.length; i++) {
+                if (translatedFeatures[i] < minValues[i]) {
+                    pruneTranslatedObject = true;
+                    break;
+                }
+            }
+
+            if (!pruneTranslatedObject) {
+                prunedTranslatedObjects.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return prunedTranslatedObjects;
     }
 
     private <T>
@@ -146,3 +175,4 @@ public class TranslationMatchCalculator implements MatchCalculator {
         return translation;
     }
 }
+

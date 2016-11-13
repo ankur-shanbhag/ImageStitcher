@@ -117,6 +117,29 @@ public class DataTransformer {
         return translatedObj;
     }
 
+    public static double[] computeMinValues(Collection<DataObject> dataObjects) {
+        double[] minValues = null;
+        Iterator<DataObject> iterator = dataObjects.iterator();
+        while (iterator.hasNext()) {
+            DataObject dataObject = iterator.next();
+            if (null == minValues) {
+                minValues = new double[dataObject.getDimension()];
+                // initialize to very large value
+                for (int i = 0; i < minValues.length; i++) {
+                    minValues[i] = Double.MAX_VALUE;
+                }
+            }
+
+            double[] features = dataObject.getFeatures();
+            for (int i = 0; i < minValues.length; i++) {
+                if (minValues[i] > features[i])
+                    minValues[i] = features[i];
+            }
+        }
+
+        return minValues;
+    }
+
     private DataTransformer() {
         // Deny object creation
     }
