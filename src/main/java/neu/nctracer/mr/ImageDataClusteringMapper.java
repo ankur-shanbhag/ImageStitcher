@@ -2,7 +2,6 @@ package neu.nctracer.mr;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,11 +30,7 @@ import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
-import neu.nctracer.log.LogManager;
-import neu.nctracer.log.Logger;
-import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.DataTransformer;
-import neu.nctracer.utils.HdfsFileUtils;
 import neu.nctracer.utils.ReflectionUtils;
 
 /**
@@ -66,10 +61,8 @@ import neu.nctracer.utils.ReflectionUtils;
  * @author Ankur Shanbhag
  *
  */
-public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
-
-    private Collection<DataObject> sourceImageData = null;
-    private Collection<DataObject> targetImageData = null;
+public class ImageDataClusteringMapper
+        extends ImageStitchingMapper<LongWritable, Text, Text, NullWritable> {
 
     private double threshold = 0.0;
 
@@ -79,15 +72,10 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
 
     private Clusterer clusterer = null;
 
-    private Logger logger = null;
-
     @Override
     protected void
               setup(Mapper<LongWritable, Text, Text, NullWritable>.Context context) throws IOException,
                                                                                     InterruptedException {
-        this.logger = LogManager.createLogger("mr");
-        LogManager.getLogManager().setDefaultLogger(logger);
-
         super.setup(context);
 
         Configuration conf = context.getConfiguration();
@@ -104,21 +92,6 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
         }
 
         threshold = conf.getDouble(HdfsConstants.IMAGE_MATCHING_ERROR, 0.0);
-
-        String sourceFilePath = conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH);
-        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath);
-        logger.debug("Successfully read source data file from location : " + sourceFilePath);
-
-        String targetFilePath = conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH);
-        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFilePath);
-        logger.debug("Successfully read target data file from location : " + targetFilePath);
-
-        try {
-            sourceImageData = DataParser.parseData(sourceFileData, ImageData.class);
-            targetImageData = DataParser.parseData(targetFileData, ImageData.class);
-        } catch (ParsingException e) {
-            throw new IOException("Error while parsing image data.", e);
-        }
 
         logger.info("Image stitching mapreduce job setup phase successful.");
     }
@@ -138,8 +111,8 @@ public class ImageDataClusteringMapper extends Mapper<LongWritable, Text, Text, 
             throw new HdfsException(e);
         }
 
-        List<DataCluster> sourceClusters = clusterer.createClusters(sourceImageData);
-        List<DataCluster> targetClusters = clusterer.createClusters(targetImageData);
+        List<DataCluster> sourceClusters = clusterer.createClusters(getSourceDataObjects());
+        List<DataCluster> targetClusters = clusterer.createClusters(getTargetDataObjects());
 
         List<List<DataTransformation<DataCluster>>> allTransformations = new ArrayList<>();
         Map<DataTransformation<DataCluster>, Match> resultMap = new HashMap<>();

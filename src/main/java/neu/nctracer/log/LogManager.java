@@ -23,8 +23,16 @@ public class LogManager {
         return logManager;
     }
 
-    public static Logger createLogger(String type) {
-        switch (type) {
+    /**
+     * Factory method to get logger instance based on requested type
+     * 
+     * @param type
+     * @return - <code> Logger instance based on type</code>
+     * @throws IllegalArgumentException
+     *             - if the input type is incorrect
+     */
+    public static Logger loggerInstance(String type) throws IllegalArgumentException {
+        switch (type.toLowerCase()) {
         case "default":
             URL url = LogManager.class.getResource("/log4j.xml");
             Logger logger = new DefaultLogger(url);
@@ -35,7 +43,9 @@ public class LogManager {
             return mapReducerLogger;
         }
 
-        throw new IllegalArgumentException("Provided className [" + type + "]");
+        throw new IllegalArgumentException("Invalid argument type ["
+                                           + type
+                                           + "]. Cannot instantiate logger.");
     }
 
     /**

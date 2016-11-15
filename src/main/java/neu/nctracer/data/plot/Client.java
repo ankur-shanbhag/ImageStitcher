@@ -41,14 +41,14 @@ public class Client {
         if (args.length >= 3)
             plotSideBySide = Boolean.valueOf(args[2]);
 
-        Logger logger = LogManager.createLogger("default");
+        Logger logger = LogManager.loggerInstance("default");
         LogManager.getLogManager().setDefaultLogger(logger);
 
         try {
             logger.info("Generating 3-D plot for correspondences");
             List<DataCorrespondence> correspondences = createDataCorrespondence(filePath);
 
-            DataPlotter plotter = DataPlotManager.getDefaultPlotter();
+            DataPlotter plotter = DataPlotManager.defaultPlotter();
             plotter.scatterPlot(correspondences, plot3d, plotSideBySide);
 
             logger.info("Successfully generated scatter plots");

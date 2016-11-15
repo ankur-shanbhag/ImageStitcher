@@ -13,7 +13,7 @@ public class DataPlotManager {
     private DataPlotManager() {
     }
 
-    public static DataPlotter getDefaultPlotter() {
+    public static DataPlotter defaultPlotter() {
         return defaultPlotter;
     }
 }

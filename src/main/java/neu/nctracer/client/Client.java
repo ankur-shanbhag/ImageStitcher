@@ -25,7 +25,7 @@ public class Client {
         final String localInputPath = args[0];
         final String localOutputPath = args[1];
 
-        Logger logger = LogManager.createLogger("default");
+        Logger logger = LogManager.loggerInstance("default");
         LogManager.getLogManager().setDefaultLogger(logger);
 
         try {
