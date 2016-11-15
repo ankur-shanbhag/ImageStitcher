@@ -1,0 +1,8 @@
+minpoints=5,eps=20
+minpoints=5,eps=10
+minpoints=5,eps=60
+minpoints=10,eps=40
+minpoints=5,eps=50
+minpoints=10,eps=30
+minpoints=10,eps=50
+minpoints=10,eps=60
