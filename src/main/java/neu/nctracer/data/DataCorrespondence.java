@@ -9,22 +9,23 @@ import neu.nctracer.exception.ParsingException;
  * @author Ankur Shanbhag
  *
  */
-public class DataCorrespondence {
+public class DataCorrespondence implements Comparable<DataCorrespondence> {
 
-    private static final String CORRESPONDENCE_SEPARATOR = "#";
+    private static final String COMPONENT_SEPARATOR = "#";
     private static final String FEATURES_SEPARATOR = ",";
 
     private DataObject source;
     private DataObject target;
+    private double error;
 
-    public DataCorrespondence(DataObject source, DataObject target) {
+    public DataCorrespondence(DataObject source, DataObject target, double error) {
         this.source = source;
         this.target = target;
+        this.error = error;
     }
 
-    public void setCorrespondence(DataObject source, DataObject target) {
-        this.source = source;
-        this.target = target;
+    public double getError() {
+        return error;
     }
 
     public DataObject getSource() {
@@ -37,8 +38,11 @@ public class DataCorrespondence {
 
     @Override
     public int hashCode() {
-        final int prime = 37;
+        final int prime = 31;
         int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(error);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + ((target == null) ? 0 : target.hashCode());
         return result;
@@ -53,6 +57,8 @@ public class DataCorrespondence {
         if (getClass() != obj.getClass())
             return false;
         DataCorrespondence other = (DataCorrespondence) obj;
+        if (Double.doubleToLongBits(error) != Double.doubleToLongBits(other.error))
+            return false;
         if (source == null) {
             if (other.source != null)
                 return false;
@@ -75,12 +81,13 @@ public class DataCorrespondence {
         for (double feature : source.getFeatures())
             builder.append(feature).append(FEATURES_SEPARATOR);
 
-        builder.replace(builder.length() - 1, builder.length(), CORRESPONDENCE_SEPARATOR);
+        builder.replace(builder.length() - 1, builder.length(), COMPONENT_SEPARATOR);
 
         for (double feature : target.getFeatures())
             builder.append(feature).append(FEATURES_SEPARATOR);
 
-        builder.deleteCharAt(builder.length() - 1);
+        builder.replace(builder.length() - 1, builder.length(), COMPONENT_SEPARATOR);
+        builder.append(error);
 
         return builder.toString();
     }
@@ -98,38 +105,52 @@ public class DataCorrespondence {
      *             generated using {@link DataCorrespondence#toString()}
      */
     public static DataCorrespondence parse(String data) throws ParsingException {
-        String[] split = data.split(CORRESPONDENCE_SEPARATOR);
-        if (split.length != 2)
+        String[] split = data.split(COMPONENT_SEPARATOR);
+        if (split.length != 3)
             throw new ParsingException("Cannot parse data input [" + data + "]");
 
         String[] features1 = split[0].split(FEATURES_SEPARATOR);
         String[] features2 = split[1].split(FEATURES_SEPARATOR);
+        String errorStr = split[2];
 
         // TODO: Write class name along with data (toString)
-        double[] sourceFeatures = new double[features1.length];
+        DataObject source = parseDataObject(data, features1);
+        DataObject target = parseDataObject(data, features2);
+        double error = parseError(data, errorStr);
+
+        return new DataCorrespondence(source, target, error);
+    }
+
+    private static DataObject parseDataObject(String data,
+                                              String[] features) throws ParsingException {
+        double[] parsedFeatures = new double[features.length];
         try {
-            for (int i = 0; i < features1.length; i++) {
-                sourceFeatures[i] = Double.parseDouble(features1[i]);
+            for (int i = 0; i < features.length; i++) {
+                parsedFeatures[i] = Double.parseDouble(features[i]);
             }
         } catch (NumberFormatException nfe) {
             throw new ParsingException("Incorrect data. Parsing failed [" + data + "]", nfe);
         }
 
-        double[] targetFeatures = new double[features2.length];
+        DataObject obj = new ImageData();
+        obj.setFeatures(parsedFeatures);
+        return obj;
+    }
+
+    private static double parseError(String data, String errorStr) throws ParsingException {
         try {
-            for (int i = 0; i < features2.length; i++) {
-                targetFeatures[i] = Double.parseDouble(features2[i]);
-            }
+            return Double.parseDouble(errorStr);
         } catch (NumberFormatException nfe) {
             throw new ParsingException("Incorrect data. Parsing failed [" + data + "]", nfe);
         }
+    }
 
-        DataObject source = new ImageData();
-        DataObject target = new ImageData();
-        source.setFeatures(sourceFeatures);
-        target.setFeatures(targetFeatures);
-
-        return new DataCorrespondence(source, target);
+    /**
+     * Error based comparison
+     */
+    @Override
+    public int compareTo(DataCorrespondence other) {
+        return Double.valueOf(this.getError()).compareTo(Double.valueOf(other.getError()));
     }
 }
 

@@ -336,7 +336,8 @@ public class ImageDataClusteringMapper
                 if (distance > threshold)
                     continue;
                 DataCorrespondence correspondence = new DataCorrespondence(sourcePoint,
-                                                                           targetPoint);
+                                                                           targetPoint,
+                                                                           distance);
                 List<DataCorrespondence> list = sortedCorrespondences.get(distance);
                 if (null == list) {
                     list = new ArrayList<>();

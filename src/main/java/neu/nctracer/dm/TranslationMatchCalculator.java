@@ -2,9 +2,12 @@ package neu.nctracer.dm;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 
 import neu.nctracer.data.DataCorrespondence;
@@ -12,7 +15,6 @@ import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.Match;
 import neu.nctracer.dm.conf.ConfigurationParams;
-import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.ReflectionUtilsException;
 import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.ReflectionUtils;
@@ -27,9 +29,6 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
     private NearestNeighbors nearestNeighbors = null;
     private ConfigurationParams params;
-
-    public TranslationMatchCalculator() {
-    }
 
     /**
      * Registers classes and other parameters to be used by the algorithm.
@@ -48,15 +47,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
                                                        KNearestNeighbors.class.getName());
         instantiateNeareastNeighborClass(nearestNeighborsClass);
         // make a copy so it can be passed on to invoked classes
-        this.params = copyParams(params);
-    }
-
-    private static ConfigurationParams copyParams(ConfigurationParams params) {
-        Map<String, String> configMap = params.getParams();
-        ConfigurationParams paramsInstance = DMConfigurationHandler.getHandler()
-                                                                   .getConfigurationParamsInstance();
-        paramsInstance.setParams(configMap);
-        return paramsInstance;
+        this.params = params;
     }
 
     private void instantiateNeareastNeighborClass(String nearestNeighborsClass) {
@@ -93,29 +84,71 @@ public class TranslationMatchCalculator implements MatchCalculator {
         Map<DataObject, DataObject> pruneTranslatedObjects = pruneTranslatedObjects(translatedObjects,
                                                                                     target);
 
+        // user might have set configurations for nearest neighbor. Thus pass
+        // the config object to nearest neighbors class
         this.nearestNeighbors.setup(target, this.params);
 
-        Set<DataCorrespondence> correspondences = new HashSet<>();
+        Queue<DataCorrespondence> minHeap = new PriorityQueue<>();
 
-        double error = 0;
         for (Entry<DataObject, DataObject> entry : pruneTranslatedObjects.entrySet()) {
-            Map<DataObject, Double> neighbors = this.nearestNeighbors.findNeighbors(entry.getValue(),
-                                                                                    1);
+            DataObject sourceObj = entry.getKey();
+            DataObject translatedSourceObj = entry.getValue();
+
+            Map<DataObject, Double> neighbors = this.nearestNeighbors.findNeighbors(translatedSourceObj,
+                                                                                    target.size());
             if (null == neighbors || neighbors.isEmpty()) {
                 continue;
             }
-            Entry<DataObject, Double> neighbor = neighbors.entrySet().iterator().next();
 
-            error += (neighbor.getValue() * neighbor.getValue());
-            DataCorrespondence correspondence = new DataCorrespondence(entry.getKey(),
-                                                                       neighbor.getKey());
-            correspondences.add(correspondence);
+            // add all pairs (source-target points) to the priority queue to
+            // greedily pick globally optimum matches (based on error)
+            for (Entry<DataObject, Double> neighbor : neighbors.entrySet()) {
+                DataObject targetObj = neighbor.getKey();
+                Double distance = neighbor.getValue();
+                minHeap.offer(new DataCorrespondence(sourceObj, targetObj, distance));
+            }
         }
 
-        Match match = new Match();
-        match.setCorrespondences(correspondences);
+        Match match = generateMatch(minHeap, source, target);
+        return match;
+    }
+
+    private Match generateMatch(Queue<DataCorrespondence> minHeap,
+                                List<DataObject> source,
+                                List<DataObject> target) {
+        Set<DataObject> unusedSourceObjects = new HashSet<>(source);
+        Set<DataObject> unusedTargetObjects = new HashSet<>(target);
+
+        Set<DataCorrespondence> correspondences = new LinkedHashSet<>();
+        double error = 0;
+
+        // loop until we find all distinct pairs
+        while (!minHeap.isEmpty()
+               && !unusedSourceObjects.isEmpty()
+               && !unusedTargetObjects.isEmpty()) {
+
+            DataCorrespondence correspondence = minHeap.poll();
+
+            DataObject sourceObj = correspondence.getSource();
+            DataObject targetObj = correspondence.getTarget();
+
+            // use this correspondence only if source and target points are not
+            // already used
+            if (unusedSourceObjects.contains(sourceObj)
+                && unusedTargetObjects.contains(targetObj)) {
+
+                unusedSourceObjects.remove(sourceObj);
+                unusedTargetObjects.remove(targetObj);
+                correspondences.add(correspondence);
+
+                error += (correspondence.getError() * correspondence.getError());
+            }
+        }
+
         error = (error == 0 || correspondences.size() == 0) ? error
                                                             : error / correspondences.size();
+        Match match = new Match();
+        match.setCorrespondences(correspondences);
         match.setError(error);
 
         return match;
