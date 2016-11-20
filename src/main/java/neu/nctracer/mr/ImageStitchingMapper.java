@@ -8,6 +8,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.ImageData;
+import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.log.LogManager;
 import neu.nctracer.log.Logger;
@@ -61,7 +62,7 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
             sourceImageData = DataParser.parseData(sourceFileData, ImageData.class);
             targetImageData = DataParser.parseData(targetFileData, ImageData.class);
         } catch (ParsingException e) {
-            throw new IOException("Error while parsing image data.", e);
+            throw new HdfsException("Error while parsing image data.", e);
         }
 
     }
@@ -79,3 +80,4 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         return targetImageData;
     }
 }
+

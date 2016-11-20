@@ -1,6 +1,7 @@
 package neu.nctracer.conf;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.InvalidConfigKeyException;
@@ -18,4 +19,7 @@ public interface ConfigurationReader {
     void reloadConfigurations() throws ConfigurationException;
 
     String getConfiguration(String key) throws InvalidConfigKeyException;
+
+    Map<String, String> getAllConfigurations();
 }
+

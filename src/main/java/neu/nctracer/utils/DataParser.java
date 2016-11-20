@@ -1,7 +1,7 @@
 package neu.nctracer.utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 import neu.nctracer.data.DataObject;
 import neu.nctracer.exception.ParsingException;
@@ -11,16 +11,16 @@ public final class DataParser {
     private static final String WHITE_SPACE_RECORD_SPLITTER = "\\s+";
     private static final String LINE_SPLITTER = "\\r?\\n";
 
-    public static Collection<DataObject>
+    public static List<DataObject>
            parseData(String data, Class<? extends DataObject> clazz) throws ParsingException {
         return parseData(data, WHITE_SPACE_RECORD_SPLITTER, clazz);
     }
 
-    public static Collection<DataObject>
+    public static List<DataObject>
            parseData(String data,
                      String recordSplitter,
                      Class<? extends DataObject> clazz) throws ParsingException {
-        Collection<DataObject> parsedData = new ArrayList<>();
+        List<DataObject> parsedData = new ArrayList<>();
         String[] lines = data.split(LINE_SPLITTER);
         for (String line : lines) {
             try {

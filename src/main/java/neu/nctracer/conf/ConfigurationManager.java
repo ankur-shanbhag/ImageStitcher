@@ -1,6 +1,7 @@
 package neu.nctracer.conf;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.InvalidConfigKeyException;
@@ -43,6 +44,10 @@ public class ConfigurationManager {
         return defaultConfigReader.getConfiguration(key);
     }
 
+    public Map<String, String> getAllConfigurations() {
+        return defaultConfigReader.getAllConfigurations();
+    }
+
     public void setDefaultReader(ConfigurationReader reader) {
         defaultConfigReader = reader;
     }
@@ -54,3 +59,4 @@ public class ConfigurationManager {
         defaultConfigReader.loadConfigurations(stream);
     }
 }
+

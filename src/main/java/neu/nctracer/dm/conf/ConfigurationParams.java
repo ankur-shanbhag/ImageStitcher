@@ -5,8 +5,9 @@ import java.util.Map;
 import neu.nctracer.exception.ParsingException;
 
 /**
- * This interface defines behaviors to dynamically set/get configuration
- * parameters required by all the data mining algorithms
+ * This interface defines behaviors to dynamically parse/set/get configuration
+ * parameters. These parameters can be used to pass dependencies using common
+ * interface to all the classes
  * 
  * @author Ankur Shanbhag
  *
@@ -14,6 +15,8 @@ import neu.nctracer.exception.ParsingException;
 public interface ConfigurationParams {
 
     void parseParams(String paramStr, String delimiter) throws ParsingException;
+
+    void parseParams(String[] params) throws ParsingException;
 
     void setParams(Map<String, String> params);
 
@@ -25,3 +28,4 @@ public interface ConfigurationParams {
 
     Map<String, String> getParams();
 }
+

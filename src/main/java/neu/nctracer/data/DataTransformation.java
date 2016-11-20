@@ -2,6 +2,8 @@ package neu.nctracer.data;
 
 import java.util.Arrays;
 
+import neu.nctracer.exception.ParsingException;
+
 /**
  * Defines translation between entities defined by parameters of type
  * <code>T</code>
@@ -12,6 +14,9 @@ import java.util.Arrays;
  *            - defines translation between type of elements
  */
 public class DataTransformation<T> implements DataObject {
+
+    private static final String COMPONENT_SEPARATOR = "#";
+    private static final String FEATURES_SEPARATOR = ",";
 
     private T sourceObj;
     private T targetObj;
@@ -71,7 +76,15 @@ public class DataTransformation<T> implements DataObject {
 
     @Override
     public String toString() {
-        return Arrays.toString(angles);
+        StringBuilder builder = new StringBuilder();
+        builder.append(distance).append(COMPONENT_SEPARATOR);
+
+        for (double angle : angles) {
+            builder.append(angle).append(FEATURES_SEPARATOR);
+        }
+        builder.delete(builder.length() - 1, builder.length());
+
+        return builder.toString();
     }
 
     @Override
@@ -102,6 +115,44 @@ public class DataTransformation<T> implements DataObject {
     @Override
     public DataObject deepClone() {
         throw new RuntimeException("Not implemented...");
+    }
+
+    public static DataTransformation parse(String data) throws ParsingException {
+        String[] split = data.split(COMPONENT_SEPARATOR);
+        if (split.length != 2)
+            throw new ParsingException("Cannot parse data input [" + data + "]");
+
+        double distance = parseDistance(data, split);
+        double[] angles = parseAngles(split[1]);
+
+        DataTransformation tranformation = new DataTransformation();
+        tranformation.setDistance(distance);
+        tranformation.setAngles(angles);
+        return tranformation;
+    }
+
+    private static double parseDistance(String data, String[] split) throws ParsingException {
+        try {
+            return Double.parseDouble(split[0]);
+        } catch (NumberFormatException nfe) {
+            throw new ParsingException("Incorrect data. Parsing failed [" + data + "]", nfe);
+        }
+    }
+
+    private static double[] parseAngles(String data) throws ParsingException {
+        String[] split = data.split(FEATURES_SEPARATOR);
+        if (split.length != 3)
+            throw new ParsingException("Cannot parse data input [" + data + "]");
+
+        double angles[] = new double[3];
+        try {
+            for (int i = 0; i < angles.length; i++)
+                angles[i] = Double.parseDouble(split[i]);
+        } catch (NumberFormatException nfe) {
+            throw new ParsingException("Cannot parse data input [" + data + "]");
+        }
+
+        return angles;
     }
 }
 

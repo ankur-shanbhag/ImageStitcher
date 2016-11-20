@@ -71,7 +71,7 @@ class DefaultConfigurationReader implements ConfigurationReader {
         if (propertyMap.containsKey(key))
             return propertyMap.get(key);
 
-        throw new InvalidConfigKeyException("Invalid");
+        throw new InvalidConfigKeyException("Invalid key [" + key + "]");
     }
 
     private void storePropertiesInMemory(Properties properties) {
@@ -84,4 +84,9 @@ class DefaultConfigurationReader implements ConfigurationReader {
         }
     }
 
+    @Override
+    public Map<String, String> getAllConfigurations() {
+        return new HashMap<>(propertyMap);
+    }
 }
+

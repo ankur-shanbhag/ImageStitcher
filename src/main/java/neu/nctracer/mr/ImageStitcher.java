@@ -2,6 +2,7 @@ package neu.nctracer.mr;
 
 import java.io.IOException;
 
+import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.exception.HdfsException;
 
 /**
@@ -13,7 +14,8 @@ import neu.nctracer.exception.HdfsException;
  */
 public interface ImageStitcher {
 
-    void setup(String localInputPath, String localOutputPath) throws IOException;
+    void setup(ConfigurationParams params) throws IOException;
 
     boolean run() throws HdfsException;
 }
+
