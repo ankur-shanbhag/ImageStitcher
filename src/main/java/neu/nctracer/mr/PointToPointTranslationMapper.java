@@ -120,3 +120,4 @@ public class PointToPointTranslationMapper
         return max;
     }
 }
+
