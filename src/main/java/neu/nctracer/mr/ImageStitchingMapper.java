@@ -1,7 +1,7 @@
 package neu.nctracer.mr;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -21,21 +21,22 @@ import neu.nctracer.utils.HdfsFileUtils;
  * @author Ankur Shanbhag
  *
  * @param <IN_KEY>
- *            - Input key to the mapper
+ *            - Input key to the Mapper
  * @param <IN_VAL>
- *            - Input value to the mapper
+ *            - Input value to the Mapper
  * @param <OUT_KEY>
- *            - Output key to the mapper
+ *            - Output key emitted by Mapper
  * @param <OUT_VAL>
- *            - Output value to the mapper
+ *            - Output value emitted by Mapper
  */
 public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         extends Mapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL> {
 
     protected Logger logger = null;
 
-    private Collection<DataObject> sourceImageData = null;
-    private Collection<DataObject> targetImageData = null;
+    private List<DataObject> sourceImageData = null;
+    private List<DataObject> targetImageData = null;
+    protected Configuration conf = null;
 
     /**
      * Sets up logger to be used and reads source and target image data files
@@ -48,14 +49,14 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         super.setup(context);
         setDefaultLogger();
 
-        Configuration conf = context.getConfiguration();
+        this.conf = context.getConfiguration();
 
         String sourceFilePath = conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH);
-        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath);
+        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath, true);
         logger.debug("Successfully read source data file from location : " + sourceFilePath);
 
         String targetFilePath = conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH);
-        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFilePath);
+        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFilePath, true);
         logger.debug("Successfully read target data file from location : " + targetFilePath);
 
         try {
@@ -72,11 +73,11 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         LogManager.getLogManager().setDefaultLogger(logger);
     }
 
-    protected Collection<DataObject> getSourceDataObjects() {
+    protected List<DataObject> getSourceDataObjects() {
         return sourceImageData;
     }
 
-    protected Collection<DataObject> getTargetDataObjects() {
+    protected List<DataObject> getTargetDataObjects() {
         return targetImageData;
     }
 }

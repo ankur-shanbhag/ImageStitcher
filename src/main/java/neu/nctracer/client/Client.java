@@ -9,10 +9,12 @@ import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.ParsingException;
+import neu.nctracer.exception.ReflectionUtilsException;
 import neu.nctracer.log.LogManager;
 import neu.nctracer.log.Logger;
-import neu.nctracer.mr.ImageDataClusteringDriver;
 import neu.nctracer.mr.ImageStitcher;
+import neu.nctracer.mr.PointToPointTranslationDriver;
+import neu.nctracer.utils.ReflectionUtils;
 
 /**
  * Starting point for image stitching program
@@ -37,9 +39,12 @@ public class Client {
             params.parseParams(args);
             addConfigurationProperties(params);
 
-            // Invoke one of many image stitching implementations. Can be made
-            // configurable
-            ImageStitcher driver = new ImageDataClusteringDriver();
+            ImageStitcher driver = instantiateDriverClass(params, logger);
+
+            logger.info("Setting Image Stitching driver class as ["
+                        + driver.getClass().getName()
+                        + "]");
+
             driver.setup(params);
             boolean status = driver.run();
 
@@ -58,6 +63,30 @@ public class Client {
         }
 
         System.exit(-1);
+    }
+
+    /**
+     * Invoke one of many image stitching implementations. Can be made set
+     * externally by the user
+     */
+    private static ImageStitcher instantiateDriverClass(ConfigurationParams params, Logger logger) {
+        String driverClassName = params.getParam("image.stitching.driver.class");
+        final ImageStitcher defaultClassInstance = new PointToPointTranslationDriver();
+
+        if (null == driverClassName) {
+            // Not specified by user. Setting to default
+            return defaultClassInstance;
+        }
+
+        try {
+            return ReflectionUtils.instantiate(driverClassName, ImageStitcher.class);
+        } catch (ReflectionUtilsException e) {
+            logger.warn("Specified class ["
+                        + driverClassName
+                        + "] cannot be instantiated. "
+                        + "Invalid argument specified for parameter [image.stitching.driver.class].");
+            return defaultClassInstance;
+        }
     }
 
     /**

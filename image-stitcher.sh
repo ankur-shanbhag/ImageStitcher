@@ -47,17 +47,8 @@ function plot_data()
 
 function run_image_stitch
 {
-   inputPath=$1
-   outputPath=$2
-
-   if [ -z "$inputPath" ] || [ -z "$outputPath" ]; then
-      echo "Need 2 arguments to run the program ..."
-      echo "Usage: image-stitcher.sh run [input directory path] [output directory to be created]"
-      echo "Example: ./image-stitcher.sh run /home/hadoop/input /home/hadoop/output"
-      exit 0
-   fi
-
-   hadoop jar target/image-stitcher-1.0.jar $inputPath $outputPath
+   arguments=$1
+   hadoop jar target/image-stitcher-1.0.jar $arguments
    
    if [ $? != "0" ]; then
       echo "Execution failed. Something went wrong. Please check logs for details."
@@ -83,7 +74,8 @@ case $1 in
      ;;
     
    run)
-     run_image_stitch $2 $3
+     arguments=`echo ${@:2}`
+     run_image_stitch "$arguments"
      ;;
 
    *)

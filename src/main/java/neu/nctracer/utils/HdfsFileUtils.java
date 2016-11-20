@@ -15,24 +15,36 @@ import org.apache.hadoop.io.Text;
 import neu.nctracer.exception.HdfsException;
 
 /**
- * Utility class to perform HDFS I/O operation such as read, write, copy, delete
- * etc.
+ * Utility class to perform file operation such as read, write, copy, delete
+ * etc. on HDFS and local file system
  * 
  * @author Ankur Shanbhag
  *
  */
 public final class HdfsFileUtils {
 
+    /**
+     * Reads text file data from the file specified as parameter
+     * 
+     * @param conf
+     * @param filePath
+     * @param isHdfsPath
+     * @return
+     * @throws HdfsException
+     */
     public static String readFileAsString(Configuration conf,
-                                          String filePath) throws HdfsException {
-        byte[] bytes = readFile(conf, filePath);
+                                          String filePath,
+                                          boolean isHdfsPath) throws HdfsException {
+        byte[] bytes = readFile(conf, filePath, isHdfsPath);
         return new Text(bytes).toString();
     }
 
-    public static byte[] readFile(Configuration conf, String filePath) throws HdfsException {
+    public static byte[] readFile(Configuration conf,
+                                  String filePath,
+                                  boolean isHdfsPath) throws HdfsException {
         FSDataInputStream in = null;
         try {
-            FileSystem fs = FileSystem.get(URI.create(filePath), conf);
+            FileSystem fs = getFileSystem(conf, filePath, isHdfsPath);
 
             // open the file for reading
             in = fs.open(new Path(filePath));
@@ -50,11 +62,26 @@ public final class HdfsFileUtils {
         }
     }
 
+    public static FileSystem getFileSystem(Configuration conf,
+                                           String filePath,
+                                           boolean isHdfsPath) throws HdfsException {
+        try {
+            if (isHdfsPath)
+                return FileSystem.get(URI.create(filePath), conf);
+
+            // return local file system
+            return FileSystem.getLocal(conf);
+        } catch (IOException exp) {
+            throw new HdfsException(exp);
+        }
+    }
+
     public static boolean createDir(String path,
                                     boolean overwrite,
-                                    Configuration conf) throws HdfsException {
+                                    Configuration conf,
+                                    boolean isHdfsPath) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(path), conf);
+            FileSystem fs = getFileSystem(conf, path, isHdfsPath);
             Path hdfsDir = new Path(path);
 
             if (overwrite)
@@ -69,9 +96,10 @@ public final class HdfsFileUtils {
 
     public static boolean delete(String path,
                                  boolean recursive,
-                                 Configuration conf) throws HdfsException {
+                                 Configuration conf,
+                                 boolean isHdfsPath) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(path), conf);
+            FileSystem fs = getFileSystem(conf, path, isHdfsPath);
             return fs.exists(new Path(path)) ? fs.delete(new Path(path), recursive) : true;
 
         } catch (IOException e) {
@@ -83,11 +111,10 @@ public final class HdfsFileUtils {
                                        String hdfsPath,
                                        Configuration conf) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
+            FileSystem fs = getFileSystem(conf, hdfsPath, true);
 
             String hdfsCopiedPath = hdfsPath;
-
-            if (isDir(hdfsPath, conf)) {
+            if (isDir(hdfsPath, conf, true)) {
                 // if hdfsPath already exists, a new file/directory is created
                 // inside it with same name as localPath
                 hdfsCopiedPath = hdfsPath + Path.SEPARATOR + new Path(localPath).getName();
@@ -105,7 +132,7 @@ public final class HdfsFileUtils {
                                    String localPath,
                                    Configuration conf) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
+            FileSystem fs = getFileSystem(conf, hdfsPath, true);
 
             Path srcPath = new Path(hdfsPath);
             Path dstPath = new Path(localPath);
@@ -120,9 +147,10 @@ public final class HdfsFileUtils {
         }
     }
 
-    public static Path[] listFilePaths(String path, Configuration conf) throws HdfsException {
+    public static Path[]
+           listFilePaths(String path, Configuration conf, boolean isHdfsPath) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(path), conf);
+            FileSystem fs = getFileSystem(conf, path, isHdfsPath);
             FileStatus[] fileStatus = fs.listStatus(new Path(path));
 
             Path[] filePaths = new Path[fileStatus.length];
@@ -136,14 +164,16 @@ public final class HdfsFileUtils {
         }
     }
 
-    public static boolean isDir(String hdfsPath, Configuration conf) throws HdfsException {
+    public static boolean isDir(String filePath,
+                                Configuration conf,
+                                boolean isHdfsPath) throws HdfsException {
         try {
-            FileSystem fs = FileSystem.get(URI.create(hdfsPath), conf);
-            Path path = new Path(hdfsPath);
+            FileSystem fs = getFileSystem(conf, filePath, isHdfsPath);
+            Path path = new Path(filePath);
             return fs.exists(path) && fs.isDirectory(path);
         } catch (IOException exp) {
             throw new HdfsException("Error checking if HDFS path ["
-                                    + hdfsPath
+                                    + filePath
                                     + "] is a directory",
                                     exp);
         }
@@ -153,3 +183,4 @@ public final class HdfsFileUtils {
         // Deny object creation
     }
 }
+

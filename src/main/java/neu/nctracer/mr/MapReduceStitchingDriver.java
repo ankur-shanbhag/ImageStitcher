@@ -31,6 +31,9 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
     protected Configuration conf;
     protected String hdfsBaseDirPath;
     protected String hdfsOutputPath;
+    protected String localOutputPath;
+    protected String hdfsSourceImagePath;
+    protected String hdfsTargetImagePath;
 
     private final Class<? extends MapReduceStitchingDriver> driverClass;
 
@@ -54,9 +57,28 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
                               + Path.SEPARATOR
                               + driverClass.getSimpleName()
                               + "_hdfs-output-dir";
+
+        copyImageFilesToHdfs(params);
+
+        this.localOutputPath = params.getParam("local.output.path", null);
+        if (null == localOutputPath || localOutputPath.isEmpty())
+            throw new IllegalArgumentException("Mandatory parameter [local.output.path] is not set. "
+                                               + "Cannot perform stitching operation.");
     }
 
-    protected Job createJobInstance() throws IOException {
+    private void copyImageFilesToHdfs(ConfigurationParams params) throws HdfsException {
+        logger.debug("Copying all image files to HDFS dir - " + hdfsBaseDirPath);
+        String localSourceImage = params.getParam("local.image.source.file", null);
+        String localTargetImage = params.getParam("local.image.target.file", null);
+        this.hdfsSourceImagePath = HdfsFileUtils.copyFromLocal(localSourceImage,
+                                                               hdfsBaseDirPath,
+                                                               conf);
+        this.hdfsTargetImagePath = HdfsFileUtils.copyFromLocal(localTargetImage,
+                                                               hdfsBaseDirPath,
+                                                               conf);
+    }
+
+    protected final Job createJobInstance() throws IOException {
         Job job = Job.getInstance(conf, driverClass.getSimpleName());
         job.setJarByClass(driverClass);
         return job;
@@ -65,16 +87,16 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
     private void createHdfsBaseDir(String deleteOutputDir) throws HdfsException {
         if (Boolean.valueOf(deleteOutputDir)) {
             logger.debug("Deleting HDFS base directory - " + hdfsBaseDirPath);
-            HdfsFileUtils.delete(hdfsBaseDirPath, true, conf);
+            HdfsFileUtils.delete(hdfsBaseDirPath, true, conf, true);
             logger.info("Successfully deleted HDFS base directory - " + hdfsBaseDirPath);
 
-        } else if (HdfsFileUtils.isDir(hdfsBaseDirPath, conf)) {
+        } else if (HdfsFileUtils.isDir(hdfsBaseDirPath, conf, true)) {
             throw new HdfsException("HDFS base directory aready exists - "
                                     + hdfsBaseDirPath
                                     + ". Cannot start mapreduce job to perform image stitching.");
         }
 
-        HdfsFileUtils.createDir(hdfsBaseDirPath, false, conf);
+        HdfsFileUtils.createDir(hdfsBaseDirPath, false, conf, true);
     }
 
     /**
@@ -149,4 +171,27 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         builder.delete(builder.length() - 1, builder.length());
         return builder.toString();
     }
+
+    protected void cleanup(Job job, boolean status) throws IOException, HdfsException {
+        if (status) {
+            if (job.isSuccessful()) {
+                logger.info("Mapreduce job with id ["
+                            + job.getJobID()
+                            + "] completed successfully.");
+
+                if (HdfsFileUtils.isDir(localOutputPath, conf, false)) {
+                    HdfsFileUtils.delete(localOutputPath, true, conf, false);
+                }
+                HdfsFileUtils.copyToLocal(hdfsOutputPath, localOutputPath, conf);
+                logger.info("HDFS output files copied to local file system at location - "
+                            + new File(localOutputPath).getAbsolutePath());
+            } else {
+                logger.error("Mapreduce job completed with error. Check hadoop logs for details.");
+            }
+        } else {
+            logger.error("Mapreduce job terminated with errors. Check hadoop logs for details.");
+        }
+    }
+
 }
+
