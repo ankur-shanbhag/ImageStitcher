@@ -245,8 +245,7 @@ public class ImageDataClusteringMapper
         // find correspondences between mapped source points and target points
         Set<DataCorrespondence> correspondences = findCorrespondences(translatedObjMapping,
                                                                       targetCluster);
-        Match result = new Match();
-        result.setCorrespondences(correspondences);
+        Match result = new Match(0.0, correspondences);
         return result;
     }
 

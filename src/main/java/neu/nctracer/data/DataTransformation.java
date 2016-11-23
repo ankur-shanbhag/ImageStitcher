@@ -57,6 +57,8 @@ public class DataTransformation<T> implements DataObject {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.hashCode(angles);
+        long temp = Double.doubleToLongBits(distance);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
 
@@ -70,6 +72,8 @@ public class DataTransformation<T> implements DataObject {
             return false;
         DataTransformation other = (DataTransformation) obj;
         if (!Arrays.equals(angles, other.angles))
+            return false;
+        if (Double.doubleToLongBits(distance) != Double.doubleToLongBits(other.distance))
             return false;
         return true;
     }

@@ -16,7 +16,6 @@ import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.Match;
 import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.exception.ReflectionUtilsException;
-import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.ReflectionUtils;
 
 public class TranslationMatchCalculator implements MatchCalculator {
@@ -29,6 +28,8 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
     private NearestNeighbors nearestNeighbors = null;
     private ConfigurationParams params;
+
+    private double alpha;
 
     /**
      * Registers classes and other parameters to be used by the algorithm.
@@ -46,6 +47,10 @@ public class TranslationMatchCalculator implements MatchCalculator {
         String nearestNeighborsClass = params.getParam(PARAM_NEAREST_NEIGHBOR_CLASS,
                                                        KNearestNeighbors.class.getName());
         instantiateNeareastNeighborClass(nearestNeighborsClass);
+
+        this.alpha = Double.parseDouble(params.getParam("correpondence.score.function.alpha",
+                                                        "0.5"));
+
         // make a copy so it can be passed on to invoked classes
         this.params = params;
     }
@@ -72,8 +77,8 @@ public class TranslationMatchCalculator implements MatchCalculator {
      * 1. Applies transformation on given source objects <br>
      * 2. Finds correspondences between transformed source objects and target
      * objects <br>
-     * 3. Calculates error in matching translated source points and given target
-     * points
+     * 3. Calculates score based on matching translated source points and given
+     * target points
      */
     public <T> Match findMatch(List<DataObject> source,
                                List<DataObject> target,
@@ -81,21 +86,18 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
         Map<DataObject, DataObject> translatedObjects = translateSourceObjects(source, transform);
 
-        Map<DataObject, DataObject> pruneTranslatedObjects = pruneTranslatedObjects(translatedObjects,
-                                                                                    target);
-
         // user might have set configurations for nearest neighbor. Thus pass
         // the config object to nearest neighbors class
         this.nearestNeighbors.setup(target, this.params);
 
         Queue<DataCorrespondence> minHeap = new PriorityQueue<>();
 
-        for (Entry<DataObject, DataObject> entry : pruneTranslatedObjects.entrySet()) {
+        for (Entry<DataObject, DataObject> entry : translatedObjects.entrySet()) {
             DataObject sourceObj = entry.getKey();
             DataObject translatedSourceObj = entry.getValue();
 
             Map<DataObject, Double> neighbors = this.nearestNeighbors.findNeighbors(translatedSourceObj,
-                                                                                    target.size());
+                                                                                    50);
             if (null == neighbors || neighbors.isEmpty()) {
                 continue;
             }
@@ -120,7 +122,10 @@ public class TranslationMatchCalculator implements MatchCalculator {
         Set<DataObject> unusedTargetObjects = new HashSet<>(target);
 
         Set<DataCorrespondence> correspondences = new LinkedHashSet<>();
-        double error = 0;
+        double score = Double.MIN_VALUE;
+
+        // number of correspondences found so far
+        int matchCount = 0;
 
         // loop until we find all distinct pairs
         while (!minHeap.isEmpty()
@@ -132,50 +137,48 @@ public class TranslationMatchCalculator implements MatchCalculator {
             DataObject sourceObj = correspondence.getSource();
             DataObject targetObj = correspondence.getTarget();
 
-            // use this correspondence only if source and target points are not
-            // already used
+            // use this pair only if source and target points are not
+            // already used by other processed pairs
             if (unusedSourceObjects.contains(sourceObj)
                 && unusedTargetObjects.contains(targetObj)) {
 
+                // remove so that following pairs don't use them again
                 unusedSourceObjects.remove(sourceObj);
                 unusedTargetObjects.remove(targetObj);
-                correspondences.add(correspondence);
 
-                error += (correspondence.getError() * correspondence.getError());
-            }
-        }
+                // generate score for this correspondence
+                double currentScore = generateScore(++matchCount, correspondence.getError());
 
-        error = (error == 0 || correspondences.size() == 0) ? error
-                                                            : error / correspondences.size();
-        Match match = new Match();
-        match.setCorrespondences(correspondences);
-        match.setError(error);
-
-        return match;
-    }
-
-    private Map<DataObject, DataObject> pruneTranslatedObjects(
-                                                               Map<DataObject, DataObject> translatedObjects,
-                                                               List<DataObject> target) {
-        Map<DataObject, DataObject> prunedTranslatedObjects = new HashMap<>();
-        double[] minValues = DataTransformer.computeMinValues(target);
-
-        for (Entry<DataObject, DataObject> entry : translatedObjects.entrySet()) {
-            double[] translatedFeatures = entry.getValue().getFeatures();
-            boolean pruneTranslatedObject = false;
-            for (int i = 0; i < translatedFeatures.length; i++) {
-                if (translatedFeatures[i] < minValues[i]) {
-                    pruneTranslatedObject = true;
+                // keep the score if the match is good or we haven't at least
+                // looked at couple of matches
+                if (currentScore >= score) {
+                    score = currentScore;
+                    correspondences.add(correspondence);
+                } else {
+                    // Generated score wasn't good. We have found all good
+                    // matches.
                     break;
                 }
             }
-
-            if (!pruneTranslatedObject) {
-                prunedTranslatedObjects.put(entry.getKey(), entry.getValue());
-            }
         }
 
-        return prunedTranslatedObjects;
+        return new Match(score, correspondences);
+    }
+
+    /**
+     * Scoring function is: <tt>(alpha * size) - ((1 - alpha) * error)</tt>
+     * 
+     * @param position
+     *            - correspondence position in the generated match list sorted
+     *            by minimum error
+     * @param error
+     *            - error incurred in generating the matching correspondence
+     * 
+     * @return - double value generated using specified formula
+     */
+    private double generateScore(int position, double error) {
+        double penaltyFactor = (1 - this.alpha);
+        return (this.alpha * position) - (penaltyFactor * error);
     }
 
     private <T>

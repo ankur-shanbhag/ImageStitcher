@@ -4,12 +4,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.map.MultithreadedMapper;
@@ -18,14 +16,23 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.ImageData;
+import neu.nctracer.data.Match;
 import neu.nctracer.dm.TranslationMatchCalculator;
 import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
+import neu.nctracer.mr.PointToPointTranslationReducer.PointToPointTranslationGroupComparator;
 import neu.nctracer.utils.DataParser;
 import neu.nctracer.utils.DataTransformer;
 import neu.nctracer.utils.HdfsFileUtils;
 
+/**
+ * Driver class to invoke a map-reduce job which can stitch images based on
+ * translation defined between any pair of source and target image points
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
 
     private String hdfsInputPath = null;
@@ -63,15 +70,11 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
     private void writeTranslationsToHdfs(List<DataObject> sourceData,
                                          List<DataObject> targetData) throws HdfsException {
         BufferedWriter writer = null;
-        int count = 0;
-        Random r = new Random(System.currentTimeMillis());
         try {
             FileSystem fs = HdfsFileUtils.getFileSystem(conf, hdfsInputPath, true);
             writer = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(hdfsInputPath))));
             for (DataObject source : sourceData) {
                 for (DataObject target : targetData) {
-                    if (r.nextDouble() < 0.7)
-                        continue;
                     double distance = DataTransformer.computeEuclideanDistance(source, target);
                     double[] angles = DataTransformer.computeDirectionAngles(source, target);
 
@@ -81,8 +84,6 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
                     // write all the transformations to HDFS
                     writer.write(transformation.toString());
                     writer.newLine();
-                    if (++count == 200)
-                        return;
                 }
             }
         } catch (IOException exp) {
@@ -107,22 +108,20 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
 
             setJobConfigurations(job);
 
-            job.setMapperClass(MultithreadedMapper.class);
-            MultithreadedMapper.setMapperClass(job, PointToPointTranslationMapper.class);
-            int numThreadsPerMapper = Integer.parseInt(params.getParam("num.threads.per.mapper",
-                                                                       "4"));
-            MultithreadedMapper.setNumberOfThreads(job, numThreadsPerMapper);
-
-            // map only job
-            job.setNumReduceTasks(0);
-
             // add all required jars to mapreduce job
             addJarsToDistributedCache(job);
+
+            setMapperConfigurations(job);
+
+            // Reduce phase configurations
+            job.setGroupingComparatorClass(PointToPointTranslationGroupComparator.class);
+            job.setReducerClass(PointToPointTranslationReducer.class);
+            job.setNumReduceTasks(1);
 
             NLineInputFormat.addInputPath(job, new Path(hdfsInputPath));
             job.setInputFormatClass(NLineInputFormat.class);
 
-            job.setOutputKeyClass(Text.class);
+            job.setOutputKeyClass(Match.class);
             job.setOutputValueClass(NullWritable.class);
 
             FileOutputFormat.setOutputPath(job, new Path(hdfsOutputPath));
@@ -142,13 +141,26 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
         }
     }
 
-    private void setJobConfigurations(Job job) {
+    private void setMapperConfigurations(Job job) {
+        // using multi-threaded mapper
+        job.setMapperClass(MultithreadedMapper.class);
+        MultithreadedMapper.setMapperClass(job, PointToPointTranslationMapper.class);
+
+        int numThreadsPerMapper = Integer.parseInt(params.getParam("num.threads.per.mapper", "2"));
+        MultithreadedMapper.setNumberOfThreads(job, numThreadsPerMapper);
+
+        // output types from Mapper
+        job.setMapOutputKeyClass(Match.class);
+        job.setMapOutputValueClass(NullWritable.class);
+
         int inputLinesPerMapper = Integer.parseInt(params.getParam("num.input.lines.mapper",
                                                                    "1000"));
         job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap",
                                       inputLinesPerMapper);
         logger.debug("Setting input lines per mapper to " + inputLinesPerMapper);
+    }
 
+    private void setJobConfigurations(Job job) {
         job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImagePath);
         job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImagePath);
 
@@ -161,3 +173,4 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
     }
 
 }
+

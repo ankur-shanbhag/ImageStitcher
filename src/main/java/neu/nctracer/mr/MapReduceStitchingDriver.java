@@ -47,7 +47,7 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
      * required by the stitching jobs
      */
     @Override
-    public void setup(ConfigurationParams params) throws HdfsException {
+    public void setup(ConfigurationParams params) throws HdfsException, IllegalArgumentException {
         this.conf = createConfiguration(params.getParam("hadoop.conf.path"));
 
         this.hdfsBaseDirPath = params.getParam("hdfs.main.dir");
@@ -63,16 +63,25 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         this.localOutputPath = params.getParam("local.output.path", null);
         if (null == localOutputPath || localOutputPath.isEmpty())
             throw new IllegalArgumentException("Mandatory parameter [local.output.path] is not set. "
-                                               + "Cannot perform stitching operation.");
+                                               + "This parameter specifies directory to copy stitching output on local machine.");
     }
 
-    private void copyImageFilesToHdfs(ConfigurationParams params) throws HdfsException {
+    private void copyImageFilesToHdfs(ConfigurationParams params) throws HdfsException,
+                                                                  IllegalArgumentException {
         logger.debug("Copying all image files to HDFS dir - " + hdfsBaseDirPath);
         String localSourceImage = params.getParam("local.image.source.file", null);
-        String localTargetImage = params.getParam("local.image.target.file", null);
         this.hdfsSourceImagePath = HdfsFileUtils.copyFromLocal(localSourceImage,
                                                                hdfsBaseDirPath,
                                                                conf);
+        if (null == localSourceImage)
+            throw new IllegalArgumentException("Mandatory parameter [local.image.source.file] is not set. "
+                                               + "This parameter specifies path to source image file.");
+
+        String localTargetImage = params.getParam("local.image.target.file", null);
+        if (null == localTargetImage)
+            throw new IllegalArgumentException("Mandatory parameter [local.image.target.file] is not set. "
+                                               + "This parameter specifies path to target image file.");
+
         this.hdfsTargetImagePath = HdfsFileUtils.copyFromLocal(localTargetImage,
                                                                hdfsBaseDirPath,
                                                                conf);
@@ -132,8 +141,8 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
             String localJars = cacheLocalJars(libDir, fs);
             if (null == localJars || localJars.isEmpty()) {
                 logger.warn("No local dependent jar files found at location ["
-                            + projectHome
-                            + "/target/lib ]");
+                            + libDir.getAbsolutePath()
+                            + "]");
                 return;
             }
 
