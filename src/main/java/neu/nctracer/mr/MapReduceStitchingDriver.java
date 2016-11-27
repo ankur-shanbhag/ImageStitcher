@@ -2,6 +2,8 @@ package neu.nctracer.mr;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -48,7 +50,7 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
      */
     @Override
     public void setup(ConfigurationParams params) throws HdfsException, IllegalArgumentException {
-        this.conf = createConfiguration(params.getParam("hadoop.conf.path"));
+        this.conf = createConfiguration(params);
 
         this.hdfsBaseDirPath = params.getParam("hdfs.main.dir");
         createHdfsBaseDir(params.getParam("hdfs.dirs.delete"));
@@ -112,13 +114,25 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
      * Creates <code>Configuration</code> instance and adds necessary Hadoop
      * resources to it.
      * 
-     * @param hadoopConfDir
+     * @param params
      */
-    protected Configuration createConfiguration(String hadoopConfDir) {
+    protected Configuration createConfiguration(ConfigurationParams params) {
+        String hadoopConfDir = params.getParam("hadoop.conf.path");
+
         Configuration conf = new Configuration();
         conf.addResource(new Path(hadoopConfDir + "/mapred-site.xml"));
         conf.addResource(new Path(hadoopConfDir + "/hdfs-site.xml"));
         conf.addResource(new Path(hadoopConfDir + "/core-site.xml"));
+
+        // Pass all the configurable parameters set by the user to mapreduce job
+        Map<String, String> allParams = params.getParams();
+        String[] strings = new String[allParams.size()];
+        int i = 0;
+        for (Entry<String, String> param : allParams.entrySet()) {
+            strings[i++] = param.toString();
+        }
+
+        conf.setStrings("configurable.params", strings);
         return conf;
     }
 
@@ -201,6 +215,5 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
             logger.error("Mapreduce job terminated with errors. Check hadoop logs for details.");
         }
     }
-
 }
 

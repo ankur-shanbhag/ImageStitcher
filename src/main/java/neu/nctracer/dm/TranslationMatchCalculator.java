@@ -44,8 +44,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
      *            - Configuration parameters
      */
     public void setup(ConfigurationParams params) {
-        String nearestNeighborsClass = params.getParam(PARAM_NEAREST_NEIGHBOR_CLASS,
-                                                       KNearestNeighbors.class.getName());
+        String nearestNeighborsClass = params.getParam(PARAM_NEAREST_NEIGHBOR_CLASS);
         instantiateNeareastNeighborClass(nearestNeighborsClass);
 
         this.alpha = Double.parseDouble(params.getParam("correpondence.score.function.alpha",
@@ -57,7 +56,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
     private void instantiateNeareastNeighborClass(String nearestNeighborsClass) {
 
-        if (nearestNeighborsClass.equals(KNearestNeighbors.class.getName())) {
+        if (null == nearestNeighborsClass) {
             // load default class
             this.nearestNeighbors = new KNearestNeighbors();
         } else {

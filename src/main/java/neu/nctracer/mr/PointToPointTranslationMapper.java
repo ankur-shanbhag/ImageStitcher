@@ -12,7 +12,6 @@ import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.Match;
 import neu.nctracer.dm.MatchCalculator;
 import neu.nctracer.dm.TranslationMatchCalculator;
-import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
 import neu.nctracer.utils.ReflectionUtils;
@@ -37,8 +36,7 @@ public class PointToPointTranslationMapper
         super.setup(context);
 
         this.matchCalculator = getMatchingCalculationClass(conf);
-        this.matchCalculator.setup(DMConfigurationHandler.getHandler()
-                                                         .getConfigurationParamsInstance());
+        this.matchCalculator.setup(params);
     }
 
     private MatchCalculator getMatchingCalculationClass(Configuration conf) {

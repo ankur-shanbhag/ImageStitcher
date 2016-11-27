@@ -8,6 +8,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.ImageData;
+import neu.nctracer.dm.conf.ConfigurationParams;
+import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.log.LogManager;
@@ -38,6 +40,8 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
     private List<DataObject> targetImageData = null;
     protected Configuration conf = null;
 
+    protected ConfigurationParams params = null;
+
     /**
      * Sets up logger to be used and reads source and target image data files
      * in-memory for per stitching
@@ -50,6 +54,12 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         setDefaultLogger();
 
         this.conf = context.getConfiguration();
+
+        try {
+            parseConfigurableParams();
+        } catch (ParsingException exp) {
+            throw new HdfsException("Error parsing configuration parameters", exp);
+        }
 
         String sourceFilePath = conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH);
         String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath, true);
@@ -66,6 +76,13 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
             throw new HdfsException("Error while parsing image data.", e);
         }
 
+    }
+
+    protected void parseConfigurableParams() throws ParsingException {
+        this.params = DMConfigurationHandler.getHandler().getConfigurationParamsInstance();
+        String[] strings = this.conf.getStrings("configurable.params");
+        if (null != strings)
+            params.parseParams(strings);
     }
 
     protected void setDefaultLogger() {
