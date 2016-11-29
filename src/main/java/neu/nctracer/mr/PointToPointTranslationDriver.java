@@ -13,12 +13,12 @@ import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.map.MultithreadedMapper;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.ImageData;
 import neu.nctracer.data.Match;
 import neu.nctracer.dm.TranslationMatchCalculator;
-import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.mr.PointToPointTranslationReducer.PointToPointTranslationGroupComparator;
@@ -173,4 +173,3 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
     }
 
 }
-

@@ -9,7 +9,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import neu.nctracer.dm.conf.ConfigurationParams;
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.utils.HdfsFileUtils;
 
@@ -83,4 +83,3 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
         }
     }
 }
-

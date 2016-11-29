@@ -1,4 +1,4 @@
-package neu.nctracer.dm.conf;
+package neu.nctracer.conf.cli;
 
 /**
  * Provides mechanism to inject an implementation of
@@ -6,13 +6,13 @@ package neu.nctracer.dm.conf;
  * 
  * @author Ankur Shanbhag
  */
-public final class DMConfigurationHandler {
-    private static DMConfigurationHandler handler = new DMConfigurationHandler();
+public final class CLIConfigurationManager {
+    private static CLIConfigurationManager handler = new CLIConfigurationManager();
 
-    private DMConfigurationHandler() {
+    private CLIConfigurationManager() {
     }
 
-    public static DMConfigurationHandler getHandler() {
+    public static CLIConfigurationManager getHandler() {
         return handler;
     }
 

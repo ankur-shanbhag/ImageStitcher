@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import neu.nctracer.conf.ConfigurationManager;
-import neu.nctracer.dm.conf.ConfigurationParams;
-import neu.nctracer.dm.conf.DMConfigurationHandler;
+import neu.nctracer.conf.cli.ConfigurationParams;
+import neu.nctracer.conf.cli.CLIConfigurationManager;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
@@ -34,8 +34,8 @@ public class Client {
         LogManager.getLogManager().setDefaultLogger(logger);
 
         try {
-            ConfigurationParams params = DMConfigurationHandler.getHandler()
-                                                               .getConfigurationParamsInstance();
+            ConfigurationParams params = CLIConfigurationManager.getHandler()
+                                                                .getConfigurationParamsInstance();
             params.parseParams(args);
             addConfigurationProperties(params);
 
@@ -108,4 +108,3 @@ public class Client {
         }
     }
 }
-

@@ -3,8 +3,8 @@ package neu.nctracer.dm;
 import java.util.List;
 import java.util.Map;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
-import neu.nctracer.dm.conf.ConfigurationParams;
 
 public interface NearestNeighbors {
 

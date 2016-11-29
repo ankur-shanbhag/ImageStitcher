@@ -3,8 +3,8 @@ package neu.nctracer.dm.cluster;
 import java.util.Collection;
 import java.util.List;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
-import neu.nctracer.dm.conf.ConfigurationParams;
 
 /**
  * Contract for all classes implementing clustering algorithms
@@ -26,4 +26,3 @@ public interface Clusterer {
 
     List<DataCluster> createClusters(Collection<DataObject> dataPoints);
 }
-

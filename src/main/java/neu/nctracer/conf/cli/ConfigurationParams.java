@@ -1,4 +1,4 @@
-package neu.nctracer.dm.conf;
+package neu.nctracer.conf.cli;
 
 import java.util.Map;
 
@@ -28,4 +28,3 @@ public interface ConfigurationParams {
 
     Map<String, String> getParams();
 }
-

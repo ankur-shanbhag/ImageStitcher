@@ -1,4 +1,4 @@
-package neu.nctracer.dm.conf;
+package neu.nctracer.conf.cli;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import neu.nctracer.exception.ParsingException;
 
 /**
  * Default implementation to dynamic set/get configuration params required by
- * data mining algorithms
+ * image-stitching algorithms
  * 
  * @author Ankur Shanbhag
  *
@@ -83,6 +83,4 @@ public class DefaultConfigurationParams implements ConfigurationParams {
     public Map<String, String> getParams() {
         return new HashMap<>(this.configMap);
     }
-
 }
-

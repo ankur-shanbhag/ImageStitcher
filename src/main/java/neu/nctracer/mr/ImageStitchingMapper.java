@@ -6,10 +6,10 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
+import neu.nctracer.conf.cli.CLIConfigurationManager;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.ImageData;
-import neu.nctracer.dm.conf.ConfigurationParams;
-import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.log.LogManager;
@@ -79,7 +79,7 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
     }
 
     protected void parseConfigurableParams() throws ParsingException {
-        this.params = DMConfigurationHandler.getHandler().getConfigurationParamsInstance();
+        this.params = CLIConfigurationManager.getHandler().getConfigurationParamsInstance();
         String[] strings = this.conf.getStrings("configurable.params");
         if (null != strings)
             params.parseParams(strings);
@@ -98,4 +98,3 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         return targetImageData;
     }
 }
-

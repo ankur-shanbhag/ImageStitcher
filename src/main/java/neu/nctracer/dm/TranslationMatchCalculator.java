@@ -10,11 +10,11 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.Match;
-import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.exception.ReflectionUtilsException;
 import neu.nctracer.utils.ReflectionUtils;
 
@@ -210,4 +210,3 @@ public class TranslationMatchCalculator implements MatchCalculator {
         return translation;
     }
 }
-

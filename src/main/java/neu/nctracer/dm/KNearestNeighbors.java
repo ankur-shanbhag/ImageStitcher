@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
-import neu.nctracer.dm.conf.ConfigurationParams;
 import neu.nctracer.log.LogManager;
 import neu.nctracer.log.Logger;
 import neu.nctracer.utils.DataTransformer;

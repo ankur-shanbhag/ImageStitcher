@@ -12,7 +12,7 @@ import org.apache.hadoop.mapreduce.Job;
 
 import neu.nctracer.conf.ConfigurationConstants;
 import neu.nctracer.conf.ConfigurationManager;
-import neu.nctracer.dm.conf.ConfigurationParams;
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.InvalidConfigKeyException;
@@ -216,4 +216,3 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         }
     }
 }
-

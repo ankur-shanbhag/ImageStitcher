@@ -17,6 +17,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
+import neu.nctracer.conf.cli.CLIConfigurationManager;
 import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
@@ -25,8 +27,6 @@ import neu.nctracer.data.Match;
 import neu.nctracer.dm.cluster.Clusterer;
 import neu.nctracer.dm.cluster.DBSCANCluster;
 import neu.nctracer.dm.cluster.DataCluster;
-import neu.nctracer.dm.conf.ConfigurationParams;
-import neu.nctracer.dm.conf.DMConfigurationHandler;
 import neu.nctracer.exception.HdfsException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
@@ -68,7 +68,7 @@ public class ImageDataClusteringMapper
 
     private final Text TEXT_KEY = new Text();
 
-    private DMConfigurationHandler configParamHandler = DMConfigurationHandler.getHandler();
+    private CLIConfigurationManager configParamHandler = CLIConfigurationManager.getHandler();
 
     private Clusterer clusterer = null;
 
@@ -374,4 +374,3 @@ public class ImageDataClusteringMapper
         }
     }
 }
-

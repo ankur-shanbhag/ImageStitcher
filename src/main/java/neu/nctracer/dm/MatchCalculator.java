@@ -2,10 +2,10 @@ package neu.nctracer.dm;
 
 import java.util.List;
 
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
 import neu.nctracer.data.Match;
-import neu.nctracer.dm.conf.ConfigurationParams;
 
 /**
  * Interface to be implemented by all the classes which apply specified
@@ -22,4 +22,3 @@ public interface MatchCalculator {
                         List<DataObject> target,
                         DataTransformation<T> transform);
 }
-
