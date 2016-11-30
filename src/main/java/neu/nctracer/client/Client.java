@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import neu.nctracer.conf.ConfigurationManager;
-import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.conf.cli.CLIConfigurationManager;
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.exception.ConfigurationException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.exception.ReflectionUtilsException;
@@ -70,7 +70,7 @@ public class Client {
      * externally by the user
      */
     private static ImageStitcher instantiateDriverClass(ConfigurationParams params, Logger logger) {
-        String driverClassName = params.getParam("image.stitching.driver.class");
+        String driverClassName = params.getParam("image.stitching.class");
         final ImageStitcher defaultClassInstance = new PointToPointTranslationDriver();
 
         if (null == driverClassName) {
@@ -84,7 +84,7 @@ public class Client {
             logger.warn("Specified class ["
                         + driverClassName
                         + "] cannot be instantiated. "
-                        + "Invalid argument specified for parameter [image.stitching.driver.class].");
+                        + "Invalid argument specified for parameter [image.stitching.class].");
             return defaultClassInstance;
         }
     }
@@ -108,3 +108,4 @@ public class Client {
         }
     }
 }
+

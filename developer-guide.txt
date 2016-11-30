@@ -1,0 +1,100 @@
+##### INTRODUCTION #####
+ 
+This document provides high level description of the project components, 
+examples to understand basic operations supported by the system and 
+some of the important implementation details to help developers make
+changes to the system or extend existing functionality.
+
+### GETTING STARTED ###
+
+1. Building the project
+The shell script image-stitcher.sh can be used to build, run and debug or
+analyze the output of the program.
+
+## Steps to build the project:
+> Copy file configuration.properties.template as configuration.properties
+> Set all the parameters as instructed in the template file. Below are
+  the instructions for parameters which are may cause confusion to the reader.
+  
+  hdfs.main.dirs => This parameter specifies absolute path on HDFS where all
+                    the input file(s) (if any) and image files will be stored. 
+                    Also, the program will generate output under this path.
+
+  hdfs.dirs.delete => Boolean value to confirm if path specified by parameter
+                      hdfs.main.dirs can be deleted (if exists). If set as 
+                      false, hdfs.main.dirs must point to non existing path
+                      else the program will error out.
+                      
+  project.base.path => Absolute path to the folder containing GIT cloned
+                       project. For example if the project is cloned at
+                       location "/home/hadoop" then this parameter should be
+                       set to "/home/hadoop/ImageStitcher"
+
+  local.image.source.file => Absolute path to the image stack file which should
+                             be used as source image by stitching algorithm.                                                             
+
+  local.log.output.dir => Path to some folder where you wish to redirect the
+                          generated logs. 
+                          
+  gnuplot.process.path => This parameter is optional and needed only when
+                          the develop wants to debug generated output. Set the
+                          path to gnuplot executable process. If gnuplot is
+                          installed using application manager it is 
+                          "/usr/bin/gnuplot". 
+
+> Build the project using "./image-stitcher build" command.
+  Actions taken when the project is build:
+  1. Generates a folder named "target" inside current working directory.
+  2. Compiles all the classes to generates "target/image-stitcher-xx.jar" 
+  3. Copies all the user configurations to a file "configuration.properties"
+     inside target/conf.
+  4. Also copies log4j configuration file inside target/conf.
+  5. All the dependent jar files needed at runtime are copied inside 
+     "target/lib" folder. These file are also added to the jar file manifest.
+     
+  To expedite the development process, developer need not build the project 
+  everytime configuration parameters are changes. Rather, he can simply make
+  changes to the file "target/conf/configuration.properties"
+  
+## Steps to run the project
+> Project can be run using "./image-stitcher run" command. This command is 
+  can accept arbitrary number of parameters which can be very helpful
+  to inject dependencies or tune parameter values without altering the source
+  code. Every parameter must be of the format "parameter=value".
+  This command requires one mandatory parameter "local.output.path" to store 
+  generated output on local machine.
+  
+  Eg: ./image-stitcher.sh run local.output.path=/home/hadoop/output
+
+  There are several other parameters which can be passed on to the program.
+  
+  1. local.input.path => Some implementations of the image-stitching algorithm
+                         requires additional input parameters for execution.
+                         Developer can specify those using this parameter.
+                            
+  2. image.stitching.class => Developer can configure the image-stitching
+                              algorithm class using this parameter. By default
+                              this parameter is set to class
+                              "PointToPointTranslationDriver". Developers can
+                              implement other algorithms for image stitching 
+                              and set the class-name to this parameter. 
+                              
+                              An clustering based implementation for image
+                              stitching is implemented in the project. You can
+                              can use it by setting this parameter with value
+                              "neu.nctracer.mr.ImageDataClusteringDriver".
+                              For this clustering algorithm to work, you also
+                              need to specify "local.input.path" with 
+                              clustering parameters. Defuult clustering 
+                              algorithm is DBSCAN. Look for input in sample-data
+                              directory to check the format of input file.
+                              Developer can also change clustering algorithm
+                              using another parameter (specified below).
+                              
+                              Note: You should specify absolute class names when
+                              passed as parameters. 
+                              
+  
+  
+  
+  
