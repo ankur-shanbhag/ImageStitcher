@@ -134,6 +134,7 @@ public class JavaPlotter implements DataPlotter {
 
         DataSetPlot dataPlot = new DataSetPlot(data);
         dataPlot.setTitle(Arrays.toString(obj.getFeatures()));
+        dataPlot.setTitle("");
         // dataPlot.setPlotStyle(plotStyle);
 
         JavaPlot p = plot.getJavaPlot();

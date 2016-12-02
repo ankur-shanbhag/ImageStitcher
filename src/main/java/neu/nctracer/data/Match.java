@@ -111,7 +111,47 @@ public class Match implements Comparable<Match>, WritableComparable<Match>, Writ
 
     @Override
     public String toString() {
-        return "Score: " + this.score + ", Correspondences : " + correspondences;
+        StringBuilder builder = new StringBuilder();
+        builder.append(this.score).append("=");
+        if (null == correspondences || correspondences.isEmpty())
+            return builder.toString();
+
+        for (DataCorrespondence correspondence : correspondences) {
+            builder.append(correspondence).append("|");
+        }
+        builder.delete(builder.length() - 1, builder.length());
+
+        return builder.toString();
+    }
+
+    /**
+     * Parse the data to build Match instance
+     */
+    public static Match parse(String data) throws ParsingException {
+        String[] split = data.split("=");
+        if (split.length != 2)
+            throw new ParsingException("Cannot parse data input data.");
+
+        double score = 0;
+        try {
+            score = Double.parseDouble(split[0]);
+        } catch (NumberFormatException nfe) {
+            throw new ParsingException("Incorrect data. Error parsing score value ["
+                                       + split[0]
+                                       + "]",
+                                       nfe);
+        }
+
+        if (split[1].isEmpty())
+            return new Match(score, null);
+
+        Set<DataCorrespondence> set = new LinkedHashSet<>();
+        String[] correspondences = split[1].split("\\|");
+        for (String correspondence : correspondences) {
+            set.add(DataCorrespondence.parse(correspondence));
+        }
+
+        return new Match(score, set);
     }
 }
 

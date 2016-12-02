@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import neu.nctracer.data.DataCorrespondence;
+import neu.nctracer.data.Match;
 import neu.nctracer.exception.DataPlotException;
 import neu.nctracer.exception.ParsingException;
 import neu.nctracer.log.LogManager;
@@ -72,19 +73,19 @@ public class Client {
             throw new FileNotFoundException("Input file [" + file + "] does not exist.");
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        List<DataCorrespondence> list = new ArrayList<>();
 
         String data = null;
         try {
-            while ((data = reader.readLine()) != null) {
-                list.add(DataCorrespondence.parse(data));
+            if ((data = reader.readLine()) != null) {
+                Match match = Match.parse(data);
+                return new ArrayList<>(match.getCorrespondences());
             }
         } finally {
             if (null != reader)
                 reader.close();
         }
 
-        return list;
+        return null;
     }
 }
 

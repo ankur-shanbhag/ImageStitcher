@@ -56,7 +56,6 @@ public class KdTrees implements NearestNeighbors {
         } catch (Exception e) {
             throw new RuntimeException("Error while constructing KD-Tree.", e);
         }
-        System.out.println("KDTree ...");
     }
 
     @Override
@@ -89,3 +88,4 @@ public class KdTrees implements NearestNeighbors {
         return map;
     }
 }
+
