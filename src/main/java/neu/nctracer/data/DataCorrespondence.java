@@ -16,10 +16,15 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
 
     private DataObject source;
     private DataObject target;
+    private DataObject translatedSource;
     private double error;
 
-    public DataCorrespondence(DataObject source, DataObject target, double error) {
+    public DataCorrespondence(DataObject source,
+                              DataObject translatedSource,
+                              DataObject target,
+                              double error) {
         this.source = source;
+        this.translatedSource = translatedSource;
         this.target = target;
         this.error = error;
     }
@@ -30,6 +35,10 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
 
     public DataObject getSource() {
         return source;
+    }
+
+    public DataObject getTranslatedSource() {
+        return translatedSource;
     }
 
     public DataObject getTarget() {
@@ -45,6 +54,7 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
         result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + ((target == null) ? 0 : target.hashCode());
+        result = prime * result + ((translatedSource == null) ? 0 : translatedSource.hashCode());
         return result;
     }
 
@@ -69,6 +79,11 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
                 return false;
         } else if (!target.equals(other.target))
             return false;
+        if (translatedSource == null) {
+            if (other.translatedSource != null)
+                return false;
+        } else if (!translatedSource.equals(other.translatedSource))
+            return false;
         return true;
     }
 
@@ -79,6 +94,11 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         for (double feature : source.getFeatures())
+            builder.append(feature).append(FEATURES_SEPARATOR);
+
+        builder.replace(builder.length() - 1, builder.length(), COMPONENT_SEPARATOR);
+
+        for (double feature : translatedSource.getFeatures())
             builder.append(feature).append(FEATURES_SEPARATOR);
 
         builder.replace(builder.length() - 1, builder.length(), COMPONENT_SEPARATOR);
@@ -106,19 +126,21 @@ public class DataCorrespondence implements Comparable<DataCorrespondence> {
      */
     public static DataCorrespondence parse(String data) throws ParsingException {
         String[] split = data.split(COMPONENT_SEPARATOR);
-        if (split.length != 3)
+        if (split.length != 4)
             throw new ParsingException("Cannot parse data input [" + data + "]");
 
         String[] features1 = split[0].split(FEATURES_SEPARATOR);
         String[] features2 = split[1].split(FEATURES_SEPARATOR);
-        String errorStr = split[2];
+        String[] features3 = split[2].split(FEATURES_SEPARATOR);
+        String errorStr = split[3];
 
         // TODO: Write class name along with data (toString)
         DataObject source = parseDataObject(data, features1);
-        DataObject target = parseDataObject(data, features2);
+        DataObject translatedSource = parseDataObject(data, features2);
+        DataObject target = parseDataObject(data, features3);
         double error = parseError(data, errorStr);
 
-        return new DataCorrespondence(source, target, error);
+        return new DataCorrespondence(source, translatedSource, target, error);
     }
 
     private static DataObject parseDataObject(String data,

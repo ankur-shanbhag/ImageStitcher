@@ -8,7 +8,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -57,27 +56,31 @@ public class JavaPlotter implements DataPlotter {
     @Override
     public void scatterPlot(List<DataCorrespondence> correspondences,
                             boolean plot3d,
-                            boolean plotSideBySide) throws DataPlotException {
+                            boolean superImpose) throws DataPlotException {
 
         String gnuplotExec = getGnuPlotExecutablePath();
 
-        JPlot sourcePlot = createPlot(gnuplotExec, plot3d, "Source");
-        JPlot targetPlot = createPlot(gnuplotExec, plot3d, "Target");
+        if (superImpose) {
+            JPlot superImposed = createPlot(gnuplotExec, plot3d, "Superimposed View");
 
-        for (int i = 0; i < correspondences.size(); i++) {
-            DataCorrespondence correspondence = correspondences.get(i);
-            String name = String.valueOf(i + 1);
-            plotPoints(sourcePlot, correspondence.getSource(), name);
-            plotPoints(targetPlot, correspondence.getTarget(), name);
-        }
-
-        if (plotSideBySide) {
-            // renders on same window frame
-            renderPlots(sourcePlot, targetPlot);
+            for (int i = 0; i < correspondences.size(); i++) {
+                DataCorrespondence correspondence = correspondences.get(i);
+                plotPoints(superImposed,
+                           i + 1,
+                           correspondence.getTranslatedSource(),
+                           correspondence.getTarget());
+            }
+            renderPlots(superImposed);
         } else {
-            // create 2 frames
-            renderPlots(sourcePlot);
-            renderPlots(targetPlot);
+            JPlot sourcePlot = createPlot(gnuplotExec, plot3d, "Source Points");
+            JPlot targetPlot = createPlot(gnuplotExec, plot3d, "Target Points");
+
+            for (int i = 0; i < correspondences.size(); i++) {
+                DataCorrespondence correspondence = correspondences.get(i);
+                plotPoints(sourcePlot, i + 1, correspondence.getSource());
+                plotPoints(targetPlot, i + 1, correspondence.getTarget());
+            }
+            renderPlots(sourcePlot, targetPlot);
         }
     }
 
@@ -126,27 +129,25 @@ public class JavaPlotter implements DataPlotter {
         frame.setSize((int) screenSize.getWidth() / 2, (int) screenSize.getHeight() / 2);
     }
 
-    private void plotPoints(JPlot plot, DataObject obj, String title) {
-
-        PlotStyle plotStyle = defaultPlotStyle();
-
-        double[][] data = { obj.getFeatures() };
+    private void plotPoints(JPlot plot, int type, DataObject... objects) {
+        double[][] data = new double[objects.length][];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = objects[i].getFeatures();
+        }
 
         DataSetPlot dataPlot = new DataSetPlot(data);
-        dataPlot.setTitle(Arrays.toString(obj.getFeatures()));
         dataPlot.setTitle("");
-        // dataPlot.setPlotStyle(plotStyle);
+        dataPlot.setPlotStyle(getPlotStyle(type));
 
         JavaPlot p = plot.getJavaPlot();
         p.addPlot(dataPlot);
     }
 
-    private PlotStyle defaultPlotStyle() {
+    private PlotStyle getPlotStyle(int type) {
         PlotStyle myStyle = new PlotStyle();
-        myStyle.setStyle(Style.DOTS);
-        myStyle.setPointSize(55);
-        myStyle.setPointType(20);
-
+        myStyle.setStyle(Style.POINTS);
+        myStyle.setPointSize(1);
+        myStyle.setPointType(type);
         return myStyle;
     }
 
@@ -194,6 +195,10 @@ public class JavaPlotter implements DataPlotter {
 
         p.set("lmargin at screen", "0.25");
         p.set("rmargin at screen", "0.75");
+        if (!plot3d) {
+            p.set("tmargin at screen", "0.25");
+            p.set("bmargin at screen", "0.75");
+        }
     }
 
     private void addMouseListernerForRotation(final JPlot plot) {

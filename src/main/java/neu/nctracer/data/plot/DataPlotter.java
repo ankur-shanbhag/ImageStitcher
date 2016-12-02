@@ -15,6 +15,6 @@ public interface DataPlotter {
 
     void scatterPlot(List<DataCorrespondence> data,
                      boolean plot3D,
-                     boolean plotSideBySide) throws DataPlotException;
+                     boolean superImpose) throws DataPlotException;
 }
 

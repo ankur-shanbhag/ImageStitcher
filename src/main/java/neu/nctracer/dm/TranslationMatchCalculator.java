@@ -106,7 +106,10 @@ public class TranslationMatchCalculator implements MatchCalculator {
             for (Entry<DataObject, Double> neighbor : neighbors.entrySet()) {
                 DataObject targetObj = neighbor.getKey();
                 Double distance = neighbor.getValue();
-                minHeap.offer(new DataCorrespondence(sourceObj, targetObj, distance));
+                minHeap.offer(new DataCorrespondence(sourceObj,
+                                                     translatedSourceObj,
+                                                     targetObj,
+                                                     distance));
             }
         }
 
@@ -210,3 +213,4 @@ public class TranslationMatchCalculator implements MatchCalculator {
         return translation;
     }
 }
+

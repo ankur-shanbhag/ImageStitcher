@@ -35,9 +35,13 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
         super.setup(params);
 
         threshold = params.getParam("error.threshold", null);
-        hdfsInputPath = HdfsFileUtils.copyFromLocal(params.getParam("local.input.path", null),
-                                                    hdfsBaseDirPath,
-                                                    conf);
+        
+        String inputPath = params.getParam("local.input.path", null);
+        if (null == inputPath || inputPath.isEmpty())
+            throw new IllegalArgumentException("Mandatory parameter [local.input.path] is not set. "
+                                               + "This parameter specifies input configuration params for clustering.");
+
+        hdfsInputPath = HdfsFileUtils.copyFromLocal(inputPath, hdfsBaseDirPath, conf);
         logger.info("Image stitching mapreduce job setup successful.");
     }
 
@@ -83,3 +87,4 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
         }
     }
 }
+

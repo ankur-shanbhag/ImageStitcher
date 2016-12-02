@@ -34,13 +34,13 @@ public class Client {
 
         String filePath = args[0];
         boolean plot3d = true;
-        boolean plotSideBySide = true;
+        boolean superImpose = true;
 
         if (args.length >= 2)
             plot3d = Boolean.valueOf(args[1]);
 
         if (args.length >= 3)
-            plotSideBySide = Boolean.valueOf(args[2]);
+            superImpose = Boolean.valueOf(args[2]);
 
         Logger logger = LogManager.loggerInstance("default");
         LogManager.getLogManager().setDefaultLogger(logger);
@@ -50,7 +50,7 @@ public class Client {
             List<DataCorrespondence> correspondences = createDataCorrespondence(filePath);
 
             DataPlotter plotter = DataPlotManager.defaultPlotter();
-            plotter.scatterPlot(correspondences, plot3d, plotSideBySide);
+            plotter.scatterPlot(correspondences, plot3d, superImpose);
 
             logger.info("Successfully generated scatter plots");
         } catch (ParsingException e) {
@@ -73,19 +73,20 @@ public class Client {
             throw new FileNotFoundException("Input file [" + file + "] does not exist.");
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
+        List<DataCorrespondence> list = new ArrayList<>();
 
         String data = null;
         try {
-            if ((data = reader.readLine()) != null) {
+            while ((data = reader.readLine()) != null) {
                 Match match = Match.parse(data);
-                return new ArrayList<>(match.getCorrespondences());
+                list.addAll(match.getCorrespondences());
             }
         } finally {
             if (null != reader)
                 reader.close();
         }
 
-        return null;
+        return list;
     }
 }
 

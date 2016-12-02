@@ -17,8 +17,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.conf.cli.CLIConfigurationManager;
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataCorrespondence;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.DataTransformation;
@@ -335,6 +335,7 @@ public class ImageDataClusteringMapper
                 if (distance > threshold)
                     continue;
                 DataCorrespondence correspondence = new DataCorrespondence(sourcePoint,
+                                                                           movedPoint,
                                                                            targetPoint,
                                                                            distance);
                 List<DataCorrespondence> list = sortedCorrespondences.get(distance);
@@ -365,12 +366,10 @@ public class ImageDataClusteringMapper
         for (DataObject transform : transformations) {
             if (transform instanceof DataTransformation) {
                 Match match = resultMap.get(transform);
-                Set<DataCorrespondence> correspondences = match.getCorrespondences();
-                for (DataCorrespondence correspondence : correspondences) {
-                    TEXT_KEY.set(correspondence.toString());
-                    context.write(TEXT_KEY, NullWritable.get());
-                }
+                TEXT_KEY.set(match.toString());
+                context.write(TEXT_KEY, NullWritable.get());
             }
         }
     }
 }
+
