@@ -34,7 +34,7 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
     public void setup(ConfigurationParams params) throws HdfsException {
         super.setup(params);
 
-        threshold = params.getParam("error.threshold", null);
+        threshold = params.getParam("error.threshold", "5");
         
         String inputPath = params.getParam("local.input.path", null);
         if (null == inputPath || inputPath.isEmpty())
