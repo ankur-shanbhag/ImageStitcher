@@ -6,8 +6,8 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.conf.cli.CLIConfigurationManager;
+import neu.nctracer.conf.cli.ConfigurationParams;
 import neu.nctracer.data.DataObject;
 import neu.nctracer.data.ImageData;
 import neu.nctracer.exception.HdfsException;
@@ -57,24 +57,31 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
 
         try {
             parseConfigurableParams();
+            // read image data passed by distributed cache
+            readImageData();
         } catch (ParsingException exp) {
             throw new HdfsException("Error parsing configuration parameters", exp);
         }
+    }
 
-        String sourceFilePath = conf.get(HdfsConstants.SOURCE_IMAGE_HDFS_PATH);
-        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFilePath, true);
-        logger.debug("Successfully read source data file from location : " + sourceFilePath);
+    protected void readImageData() throws ParsingException, HdfsException {
 
-        String targetFilePath = conf.get(HdfsConstants.TARGET_IMAGE_HDFS_PATH);
-        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFilePath, true);
-        logger.debug("Successfully read target data file from location : " + targetFilePath);
+        String sourceFileName = conf.get(HdfsConstants.SOURCE_IMAGE_FILE_NAME, null);
+        String targetFileName = conf.get(HdfsConstants.TARGET_IMAGE_FILE_NAME, null);
 
-        try {
-            sourceImageData = DataParser.parseData(sourceFileData, ImageData.class);
-            targetImageData = DataParser.parseData(targetFileData, ImageData.class);
-        } catch (ParsingException e) {
-            throw new HdfsException("Error while parsing image data.", e);
-        }
+        if (null == sourceFileName || null == targetFileName)
+            throw new IllegalArgumentException("Missing image data files. Mapper requires mandatory params ["
+                                               + HdfsConstants.SOURCE_IMAGE_FILE_NAME
+                                               + "], ["
+                                               + HdfsConstants.TARGET_IMAGE_FILE_NAME
+                                               + "]");
+        
+        String sourceFileData = HdfsFileUtils.readFileAsString(conf, sourceFileName, false);
+        String targetFileData = HdfsFileUtils.readFileAsString(conf, targetFileName, false);
+        sourceImageData = DataParser.parseData(sourceFileData, ImageData.class);
+        targetImageData = DataParser.parseData(targetFileData, ImageData.class);
+
+        logger.info("Successfully read source and target image data files from distributed cache.");
 
     }
 
@@ -98,3 +105,4 @@ public abstract class ImageStitchingMapper<IN_KEY, IN_VAL, OUT_KEY, OUT_VAL>
         return targetImageData;
     }
 }
+

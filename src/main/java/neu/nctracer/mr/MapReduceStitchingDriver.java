@@ -2,6 +2,8 @@ package neu.nctracer.mr;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -66,15 +68,14 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         if (null == localOutputPath || localOutputPath.isEmpty())
             throw new IllegalArgumentException("Mandatory parameter [local.output.path] is not set. "
                                                + "This parameter specifies directory to copy stitching output on local machine.");
+
     }
 
     private void copyImageFilesToHdfs(ConfigurationParams params) throws HdfsException,
                                                                   IllegalArgumentException {
         logger.debug("Copying all image files to HDFS dir - " + hdfsBaseDirPath);
+
         String localSourceImage = params.getParam("local.image.source.file", null);
-        this.hdfsSourceImagePath = HdfsFileUtils.copyFromLocal(localSourceImage,
-                                                               hdfsBaseDirPath,
-                                                               conf);
         if (null == localSourceImage)
             throw new IllegalArgumentException("Mandatory parameter [local.image.source.file] is not set. "
                                                + "This parameter specifies path to source image file.");
@@ -83,6 +84,10 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         if (null == localTargetImage)
             throw new IllegalArgumentException("Mandatory parameter [local.image.target.file] is not set. "
                                                + "This parameter specifies path to target image file.");
+
+        this.hdfsSourceImagePath = HdfsFileUtils.copyFromLocal(localSourceImage,
+                                                               hdfsBaseDirPath,
+                                                               conf);
 
         this.hdfsTargetImagePath = HdfsFileUtils.copyFromLocal(localTargetImage,
                                                                hdfsBaseDirPath,
@@ -134,6 +139,19 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
 
         conf.setStrings("configurable.params", strings);
         return conf;
+    }
+
+    protected void addImageFilesToCache(Job job) throws HdfsException, URISyntaxException {
+        Path sourcePath = HdfsFileUtils.getPath(conf, hdfsSourceImagePath, true);
+        URI sourceUri = new URI(sourcePath + "#" + sourcePath.getName());
+
+        Path targetPath = HdfsFileUtils.getPath(conf, hdfsTargetImagePath, true);
+        URI targetUri = new URI(targetPath + "#" + targetPath.getName());
+
+        job.addCacheFile(sourceUri);
+        job.addCacheFile(targetUri);
+        job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_FILE_NAME, sourcePath.getName());
+        job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_FILE_NAME, targetPath.getName());
     }
 
     /**
@@ -216,3 +234,4 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
         }
     }
 }
+

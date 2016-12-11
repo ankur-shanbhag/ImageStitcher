@@ -3,6 +3,7 @@ package neu.nctracer.mr;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -108,6 +109,9 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
 
             setJobConfigurations(job);
 
+            // add image files to distributed cache
+            addImageFilesToCache(job);
+
             // add all required jars to mapreduce job
             addJarsToDistributedCache(job);
 
@@ -138,6 +142,8 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
             throw new HdfsException(e.getMessage(), e);
         } catch (InterruptedException e) {
             throw new HdfsException(e.getMessage(), e);
+        } catch (URISyntaxException e) {
+            throw new HdfsException(e);
         }
     }
 
@@ -161,9 +167,6 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
     }
 
     private void setJobConfigurations(Job job) {
-        job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImagePath);
-        job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImagePath);
-
         String matchCalculationClass = params.getParam("match.calculator.class",
                                                        TranslationMatchCalculator.class.getName());
         job.getConfiguration().set("match.calculator.class", matchCalculationClass);
@@ -173,3 +176,4 @@ public class PointToPointTranslationDriver extends MapReduceStitchingDriver {
     }
 
 }
+

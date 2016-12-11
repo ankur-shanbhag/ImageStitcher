@@ -1,6 +1,7 @@
 package neu.nctracer.mr;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -57,10 +58,12 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
             job.setMapperClass(ImageDataClusteringMapper.class);
 
             job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 3);
-            job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_HDFS_PATH, hdfsSourceImagePath);
-            job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_HDFS_PATH, hdfsTargetImagePath);
+            job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_FILE_NAME, hdfsSourceImagePath);
+            job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_FILE_NAME, hdfsTargetImagePath);
             job.getConfiguration().set(HdfsConstants.IMAGE_MATCHING_ERROR, threshold);
 
+            addImageFilesToCache(job);
+            
             // add all required jars to mapreduce job
             addJarsToDistributedCache(job);
 
@@ -83,6 +86,8 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
         } catch (ClassNotFoundException e) {
             throw new HdfsException(e.getMessage(), e);
         } catch (InterruptedException e) {
+            throw new HdfsException(e.getMessage(), e);
+        } catch (URISyntaxException e) {
             throw new HdfsException(e.getMessage(), e);
         }
     }

@@ -76,6 +76,28 @@ public final class HdfsFileUtils {
         }
     }
 
+    /**
+     * Constructs path object from the given file/directory path with the URI
+     * scheme prepended depending on the type of file-system the path
+     * belongs<br>
+     * Example1: <br>
+     * Input - local path <tt>/home/hadoop</tt> <br>
+     * Return - <tt>file:///home/hadoop</tt> <br>
+     * <br>
+     * Example2: <br>
+     * Input - HDFS path <tt>/user/hadoop</tt> <br>
+     * Return - <tt>hdfs:///user/hadoop</tt> <br>
+     * 
+     * @throws HdfsException
+     */
+    public static Path getPath(Configuration conf,
+                               String path,
+                               boolean isHdfsPath) throws HdfsException {
+        FileSystem fileSystem = getFileSystem(conf, path, isHdfsPath);
+        URI uri = fileSystem.getUri();
+        return new Path(uri + path);
+    }
+
     public static boolean createDir(String path,
                                     boolean overwrite,
                                     Configuration conf,
