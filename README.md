@@ -23,32 +23,30 @@ Following are the steps to setup and build the project Linux environment using C
 
 1. Check out the project using - `git clone https://github.com/ankur-shanbhag/ImageStitcher.git`
 2. Steps to build the project
-  * `cp configuration.properties.template configuration.properties`
-  * Open _configuration.properties_ and add values for all the properties as per instructions in the file.   
+  * Build the project - `./build.sh`  
+  * Building the project generates a self contained `target/image-stitcher-1.0.tar.gz` file. This file can be shipped to any machine which meets specified software requirements.
+  * Once the `image-stitcher-1.0.tar.gz` file is copied to required location, untar the file using command  
+    `tar -zxf image-stitcher-1.0.tar.gz`. Then do `cd image-stitcher-1.0`
+  * Open _conf/configuration.properties_ and add values for all the properties as per instructions in the file.   
     Eg: __hadoop.home=/usr/local/hadoop-2.7.3/__  
     The properties related to GnuPlot are optional and only needed by developers for debugging (discussed below)
-  * Build the project - `./image-stitcher.sh build`
+
 3. Run the project using - `./image-stitcher.sh run local.output.path=[output directory path to be created]
 
 **NOTE:**  
   - Some algorithms may need input such as clustering configuration parameters (sample DBSCAN clustering configuration can be found at _sample-data/input_). In such cases input can be passed when you run the algorithm using param `local.input.path=[input path on local machine]`
-  - Similarly there are many such configurable parameters than can be controlled by the user. Users can even configure classes to perform specific task.  
+  - Similarly there are many such configurable parameters than can be controlled by the user. Users can also configure classes to perform specific task.  
     Example - To control number of input records passed to a map task use `num.input.lines.mapper=2000`. For extensive list of all the configurable parameters refer developers guide.
-  - Make sure to always run `./image-stitcher.sh build` whenever _configuration.properties_ file is modified. 
   - If any of the above specified steps do not work, verify all the required softwares are installed with specified versions. 
 
-## Installation on AWS EMR
+## Deployment on AWS EMR
 1. Start EMR cluster with Hadoop 2.7 or above.
 2. SSH to AWS master node. For steps here - http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-connect-master-node-ssh.html
-3. Install Git on master using `sudo yum install git-all`
-4. Install Apache Maven using following commands
-   * `sudo wget http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo`
-   * `sudo sed -i s/\$releasever/6/g /etc/yum.repos.d/epel-apache-maven.repo`
-   * `sudo yum install -y apache-maven`
-5. Optionally, you can copy input files, source and target image files on EMR master using `scp`. Sample image files can be found in directory `sample-data`  
-   Eg: `scp -i [keyFile].pem -r ~/source-image hadoop@[emr-master-dns]:/home/hadoop`
-7. Create S3 bucket (recommended for working on EMR) or use HDFS as a distributed storage. To use HDFS refer - http://stackoverflow.com/questions/22343918/how-do-i-use-hdfs-with-emr
-6. Once you have copied all the required file and have `git` and `mvn` installed, the steps to checkout and build the project is same as local environment.  
+3. Create S3 bucket (recommended for working on EMR) or use HDFS as a distributed storage. To use HDFS refer - http://stackoverflow.com/questions/22343918/how-do-i-use-hdfs-with-emr
+4. Generate `image-stitcher-1.0.tar.gz` file on your local machine using the steps specified above. This file can then be copied on AWS master using `scp` command.  
+   Eg: `scp -i [keyFile].pem  ~/ImageStitcher/target/image-stitcher-1.0.tar.gz hadoop@[emr-master-dns]:/home/hadoop`  
+5. Optionally, you can copy input files, source and target image files on EMR master using `scp`.
+6. The steps to untar and deploy the project on EMR server is same as the local environment.
 
 **NOTE:** By default, Hadoop on EMR machines is installed at location `/usr/lib/hadoop`. Also, GnuPlot are not supported on EMR.
 
@@ -63,5 +61,5 @@ Following are the instructions to use GnuPlot on local machine:
      * `sudo yum install gnuplot`
      * Note: For some reason if below intructions doesn't work, enter gnuplot shell using command `gnuplot` and change the terminal to `x11` using command `set terminal x11`
 2. Before you can use gnuplot, you must generate output using - `./image-stitcher.sh run` command
-3. Make sure you have correctly set the parameter `gnuplot.process.path` in _configuration.properties_ files. Whenever you set/change a parameter, you must execute `./image-stitcher.sh build`.
+3. Make sure you have correctly set the parameter `gnuplot.process.path` in _conf/configuration.properties_ files.
 4. The output directory may have multiple part files generated by the mapreduce program (depending on number of lines in the input file). Each part file contains a list of matching correspondences (from source to target) generated based on the one line of input configuration parameters. To visualize these points on a 3D scatter plot, execute `./image-stitcher.sh plot` command.
