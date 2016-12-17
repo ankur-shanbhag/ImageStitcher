@@ -169,7 +169,7 @@ public abstract class MapReduceStitchingDriver implements ImageStitcher {
             Configuration conf = job.getConfiguration();
             FileSystem fs = FileSystem.getLocal(conf);
 
-            File libDir = new File(projectHome, "/target/lib");
+            File libDir = new File(projectHome, "/lib");
             String localJars = cacheLocalJars(libDir, fs);
             if (null == localJars || localJars.isEmpty()) {
                 logger.warn("No local dependent jar files found at location ["

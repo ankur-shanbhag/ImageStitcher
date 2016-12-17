@@ -2,7 +2,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>neu.edu.nctracer</groupId>
+    <groupId>neu.nctracer</groupId>
     <artifactId>image-stitcher</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
@@ -83,10 +83,6 @@
     </repositories>
 
     <build>
-        <filters>
-            <filter>configuration.properties</filter>
-        </filters>
-
         <plugins>
             <plugin>
                 <!-- Build an executable JAR -->
@@ -101,7 +97,7 @@
                             <mainClass>neu.nctracer.client.Client</mainClass>
                         </manifest>
                         <manifestEntries>
-                            <Class-Path>${project.build.directory}/conf/</Class-Path>
+                            <Class-Path>conf/</Class-Path>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -150,6 +146,7 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+
         </plugins>
 
         <resources>
@@ -160,7 +157,15 @@
                 <includes>
                     <include>*.properties</include>
                     <include>*.xml</include>
-                    <include>*.gnu</include>
+                </includes>
+            </resource>
+
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <targetPath>${project.build.directory}</targetPath>
+                <filtering>true</filtering>
+                <includes>
+                    <include>*.sh</include>
                 </includes>
             </resource>
         </resources>

@@ -6,24 +6,8 @@
 
 function print_usage()
 {
-   echo "Usage: image-stitcher.sh [build | run | plot]"
+   echo "Usage: image-stitcher.sh [run | plot]"
 } 
-
-
-function build_image_stitcher()
-{
-   echo "Building project ..."
-   mvn clean package
-
-   if [ $? != "0" ]; then
-      echo ""
-      echo "Build failed."
-      exit $?
-   else
-      echo ""
-      echo "Build successful"
-   fi
-}
 
 function plot_data()
 {
@@ -41,22 +25,18 @@ function plot_data()
       exit 0     
    fi
 
-   mvn dependency:build-classpath -Dmdep.outputFile=classpath.tmp > /dev/null
-   java -cp target/image-stitcher-1.0.jar:`cat classpath.tmp` neu.nctracer.data.plot.Client $outputFilePath $plot3D $superimpose
+   java -cp image-stitcher-1.0.jar:`cat conf/classpath.txt` neu.nctracer.data.plot.Client $outputFilePath $plot3D $superimpose
 
    if [ $? != "0" ]; then
       echo "Error while plotting scatter plot"
-      rm classpath.tmp
       exit 0
-   else
-      rm classpath.tmp
    fi
 }
 
 function run_image_stitch
 {
    arguments=$1
-   hadoop jar target/image-stitcher-1.0.jar $arguments
+   hadoop jar image-stitcher-1.0.jar $arguments
    
    if [ $? != "0" ]; then
       echo "Execution failed. Something went wrong. Please check logs for details."
@@ -73,9 +53,6 @@ if [ $# == 0 ]; then
 fi
 
 case $1 in
-   build)
-     build_image_stitcher
-     ;;
 
    plot)
      plot_data $2 $3 $4
@@ -92,4 +69,3 @@ case $1 in
      print_usage
      exit 0
 esac
-
