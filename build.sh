@@ -34,6 +34,7 @@ function build_tar()
    mkdir -p image-stitcher-1.0
    cp image-stitcher.sh image-stitcher-1.0
    chmod +x image-stitcher-1.0/image-stitcher.sh
+   cp -r ../sample-data image-stitcher-1.0
    cp -r conf image-stitcher-1.0/conf
    cp classpath.tmp image-stitcher-1.0/conf/classpath.txt
    cp -r lib image-stitcher-1.0/lib
@@ -53,4 +54,5 @@ else
    # no arguments found
    print_usage
 fi
+
 
