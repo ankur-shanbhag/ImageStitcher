@@ -18,6 +18,15 @@ import neu.nctracer.data.Match;
 import neu.nctracer.exception.ReflectionUtilsException;
 import neu.nctracer.utils.ReflectionUtils;
 
+/**
+ * This class superimposes source points on target points by applying specified
+ * transformation on source and finds matching pair of points from source and
+ * target. The class also generates matching score to indicate matching
+ * confidence
+ * 
+ * @author Ankur Shanbhag
+ *
+ */
 public class TranslationMatchCalculator implements MatchCalculator {
 
     /*
@@ -35,7 +44,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
      * Registers classes and other parameters to be used by the algorithm.
      * Caller can specify class names for following parameters in the
      * <code>ConfigurationParams</code> object <br>
-     * 1. "nearest.neighbor.class" = defaults to {@link KNearestNeighbors} <br>
+     * 1. "nearest.neighbor.class" = defaults to {@link KdTrees} <br>
      * <br>
      * 
      * All other parameters are passed on to the invoked classes
@@ -58,7 +67,7 @@ public class TranslationMatchCalculator implements MatchCalculator {
 
         if (null == nearestNeighborsClass) {
             // load default class
-            this.nearestNeighbors = new KNearestNeighbors();
+            this.nearestNeighbors = new KdTrees();
         } else {
             // load client specified class
             try {

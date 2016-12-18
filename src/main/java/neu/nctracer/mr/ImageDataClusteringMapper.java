@@ -39,24 +39,22 @@ import neu.nctracer.utils.ReflectionUtils;
  * any) in these image stacks.<br>
  * 
  * Algorithm implementation details:<br>
- * 1. Read source and target image data points from HDFS<br>
- * 2. Find clusters of data points using configurations specified in the input
- * line to the mapper. DBSCAN used as default clustering algorithm<br>
- * 3. Find cluster center as arithmetic mean of all points in the cluster<br>
- * 4. Define translation from source cluster center point to a target cluster
- * center point. Apply this translation to all points in the source cluster<br>
- * 6. Find one-to-one correspondence between translated source cluster points
- * and target cluster points. Choose closest target point (using euclidean
- * distance) as correspondence. Compute error.<br>
- * 7. Performs steps 3 through 6 for all pairs of source and target cluster
- * points.<br>
- * 8. For all source clusters, pick target clusters and translation defined
- * above. Find group of translations which are consistent across different pairs
- * picked. Compute translation error for all cluster pairs in a group. Repeat
- * again for different pairs of source and target clusters. Keep track of
- * minimum error and associated group.<br>
- * 9. For the group with minimum error, emit one-to-one correspondences from
- * cluster pairs.
+ * 1. Find clusters from data points in both source and target image stacks. Use
+ * configurations params specified in the input lines to the mapper for
+ * clustering. DBSCAN used as default clustering algorithm. <br>
+ * 2. Find cluster centroids as arithmetic mean of all points in the cluster
+ * <br>
+ * 3. For every pair of cluster from source (S) to target (T) image stacks,
+ * define linear translation from source cluster centroid to target centroid.
+ * <br>
+ * 4. Apply these translation to all points in the source cluster (S) to find S'
+ * <br>
+ * 5. Find one-to-one correspondence between S' and T. Choose closest target
+ * point (using euclidean distance) as correspondence. Compute error. <br>
+ * 6. Find group of translations which are consistent across different pairs of
+ * clusters in source and target with minimum error.<br>
+ * 7. Emit one-to-one correspondences from cluster pairs belonging to the group
+ * found above.
  * 
  * @author Ankur Shanbhag
  *

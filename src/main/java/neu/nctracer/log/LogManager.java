@@ -13,7 +13,7 @@ import java.net.URL;
  */
 public class LogManager {
 
-    private static LogManager logManager = new LogManager();
+    private static final LogManager logManager = new LogManager();
     private Logger defaultLogger;
 
     private LogManager() {

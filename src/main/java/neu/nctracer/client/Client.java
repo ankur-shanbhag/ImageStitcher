@@ -36,8 +36,11 @@ public class Client {
         try {
             ConfigurationParams params = CLIConfigurationManager.getHandler()
                                                                 .getConfigurationParamsInstance();
-            params.parseParams(args);
             addConfigurationProperties(params);
+
+            // params specified in properties file will be overridden if
+            // specified on CLI
+            params.parseParams(args);
 
             ImageStitcher driver = instantiateDriverClass(params, logger);
 
@@ -90,7 +93,7 @@ public class Client {
     }
 
     /**
-     * Adds all other parameters specified by the user in
+     * Adds all parameters specified by the user in
      * <tt>configuration.properties</tt> file
      * 
      * @param params

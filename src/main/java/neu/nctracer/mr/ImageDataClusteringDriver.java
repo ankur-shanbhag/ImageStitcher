@@ -58,8 +58,6 @@ public class ImageDataClusteringDriver extends MapReduceStitchingDriver {
             job.setMapperClass(ImageDataClusteringMapper.class);
 
             job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 3);
-            job.getConfiguration().set(HdfsConstants.SOURCE_IMAGE_FILE_NAME, hdfsSourceImagePath);
-            job.getConfiguration().set(HdfsConstants.TARGET_IMAGE_FILE_NAME, hdfsTargetImagePath);
             job.getConfiguration().set(HdfsConstants.IMAGE_MATCHING_ERROR, threshold);
 
             addImageFilesToCache(job);

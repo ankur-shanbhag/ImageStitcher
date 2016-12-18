@@ -1,20 +1,37 @@
 ##### INTRODUCTION #####
  
-This document provides high level description of the project components, 
-examples to understand basic operations supported by the system and 
-some of the important implementation details to help developers make
-changes to the system or extend existing functionality.
+This document is useful for developers to get started with existing features
+and understand basic operations supported by the system.
+The document also provides high level description of different stitching  
+algorithms implemented with some implementation details to help developers
+make changes or extend existing functionality.
+Lastly, the document briefly speaks about other stitching approaches that came
+up as a part of discussion with other team members.
+
 
 ### GETTING STARTED ###
 
 1. Building the project
-The shell script image-stitcher.sh can be used to build, run and debug or
-analyze the output of the program.
+The shell script build.sh can be used to build the project and create a tarball
+of the project which can be shipped/deployed on any machine with required
+softwares.
 
 ## Steps to build the project:
-> Copy file configuration.properties.template as configuration.properties
-> Set all the parameters as instructed in the template file. Below are
-  the instructions for parameters which are may cause confusion to the reader.
+> Execute the shell script build.sh to create a tarball. Untar the tarball
+  "image-stitcher-1.0.tar.gz" to a desired location.
+> Project deployment structure:
+  1. Generates a tar file named "image-stitcher-1.0.tar.gz" insider a folder
+     named "target".
+  2. The tar file contains a generated jar file "image-stitcher-1.0.jar"
+     containing all the compiled project class files.
+  3. Tar file also contains all the configuration files inside "conf"
+     directory and all the dependent jar files inside "lib" directory. All these 
+     files are added to the image-stitcher jar file manifest.
+  4. Additionally, we also ship sample image data files inside tar file.
+
+> Next step is to set values for parameters in the file configuration.properties
+  inside image-stitcher-1.0/conf directory.
+> Below is a high level description of parameters to be set by the user.
   
   hdfs.main.dirs => This parameter specifies absolute path on HDFS where all
                     the input file(s) (if any) and image files will be stored. 
@@ -25,36 +42,22 @@ analyze the output of the program.
                       false, hdfs.main.dirs must point to non existing path
                       else the program will error out.
                       
-  project.base.path => Absolute path to the folder containing GIT cloned
-                       project. For example if the project is cloned at
-                       location "/home/hadoop" then this parameter should be
-                       set to "/home/hadoop/ImageStitcher"
+  project.base.path => Absolute path to the untar folder containing project binary. 
+                       For example "/home/hadoop/image-stitcher-1.0"
 
   local.image.source.file => Absolute path to the image stack file which should
-                             be used as source image by stitching algorithm.                                                             
+                             be used as source image by stitching algorithm.
+
+  local.image.target.file => Same as source image file.                                                          
 
   local.log.output.dir => Path to some folder where you wish to redirect the
-                          generated logs. 
+                          generated logs.
                           
   gnuplot.process.path => This parameter is optional and needed only when
                           the develop wants to debug generated output. Set the
                           path to gnuplot executable process. If gnuplot is
                           installed using application manager it is 
                           "/usr/bin/gnuplot". 
-
-> Build the project using "./image-stitcher build" command.
-  Actions taken when the project is build:
-  1. Generates a folder named "target" inside current working directory.
-  2. Compiles all the classes to generates "target/image-stitcher-xx.jar" 
-  3. Copies all the user configurations to a file "configuration.properties"
-     inside target/conf.
-  4. Also copies log4j configuration file inside target/conf.
-  5. All the dependent jar files needed at runtime are copied inside 
-     "target/lib" folder. These file are also added to the jar file manifest.
-     
-  To expedite the development process, developer need not build the project 
-  everytime configuration parameters are changes. Rather, he can simply make
-  changes to the file "target/conf/configuration.properties"
   
 ## Steps to run the project
 > Project can be run using "./image-stitcher run" command. This command is 
@@ -85,7 +88,7 @@ analyze the output of the program.
                               "neu.nctracer.mr.ImageDataClusteringDriver".
                               For this clustering algorithm to work, you also
                               need to specify "local.input.path" with 
-                              clustering parameters. Defuult clustering 
+                              clustering parameters. Default clustering 
                               algorithm is DBSCAN. Look for input in sample-data
                               directory to check the format of input file.
                               Developer can also change clustering algorithm
@@ -93,8 +96,118 @@ analyze the output of the program.
                               
                               Note: You should specify absolute class names when
                               passed as parameters. 
-                              
+
+  3. local.input.path => Specify input files to the image stitching implementation.
+                         One usage as described above is to pass clustering 
+                         configuration parameters to the clustering based
+                         implementation of image stitching algorithm. These input
+                         files will vary based on the implementation invoked by
+                         the user.
   
-  
-  
-  
+  4. num.input.lines.mapper => We can control the input split to the mapper using
+                               this parameter. In some cases, we may want to pass 
+                               configuration parameters as input to the mapper.
+                               Depending on the cluster configuration, user can 
+                               dynamically set number of input lines for every 
+                               mapper. Example, for clustering algorithm 
+                               implementation we can control number of clustering
+                               configurations passed to a single mapper. 
+                               Default value = 1000
+
+  5. match.calculator.class => Determines the class to determine overlap and 
+                               find matching feature points (correspondences)
+                               between given pair of image stack. The class
+                               also generates a matching score to indicate
+                               confidence in the match.
+                               Default: neu.nctracer.dm.TranslationMatchCalculator
+                                
+  6. nearest.neighbor.class => Indicates nearest neighbor implementation class
+                               useful for finding matches. Defaults to
+                               "neu.nctracer.dm.KdTrees". Another implementation 
+                               available is "neu.nctracer.dm.KNearestNeighbors".
+
+  7. correpondence.score.function.alpha => To set the value of alpha to compute
+                                           score for the generated matches.
+                                           Default: 0.5
+
+  8. image.matching.cluster.name => Indicates algorithm class for clustering
+                                    source and target image data points.
+                                    Default: neu.nctracer.dm.cluster.DBSCANCluster
+
+
+### STITCHING ALGORITHMS IMPLEMENTED ##
+
+This project started of with an cluster based implementation but later it was
+found that point-to-point matching algorithm would perform better and thus we
+implemented another algorithm based on point-to-point matching technique. 
+ 
+
+## Cluster based stitching implementation
+#. Algorithm:
+   1. Find clusters from data points in both source and target image stacks.  
+      Use configurations params specified in the input lines to the mapper for
+      clustering. DBSCAN used as default clustering algorithm.
+   2. Find cluster centroids as arithmetic mean of all points in the cluster
+   3. For every pair of cluster from source (S) to target (T) image stacks,
+      define linear translation from source cluster centroid to target centroid.
+   4. Apply these translation to all points in the source cluster (S) to find S'
+   5. Find one-to-one correspondence between S' and T. Choose closest target  
+      point (using euclidean distance) as correspondence. Compute error.
+   6. Find group of translations which are consistent across different pairs of 
+      clusters in source and target with minimum error.
+   7. Emit one-to-one correspondences from cluster pairs belonging to the group
+      found above.
+
+# Main Classes:
+MapReduceStitchingDriver, ImageDataClusteringDriver, ImageDataClusteringMapper,
+DBSCANCluster, DataTransformation, ImageData 
+
+# Comments:
+This implementation was initially chosen as it would runs fasters than point to 
+point matching. The accuracy of detecting matches depends on accuracy of
+clustering data points. Thus this implementation was discontinued as we 
+progressed along.
+
+
+## Point to Point stitching implementation
+# General Algorithm:
+   1. For each pair of data point from source (S) and target (T) data points
+      define candidate transformations. 
+   2. For each candidate transformation -
+      - Apply tranformation to every point in S to generate S'
+      - Greedily match every point in S' with available points from T
+      - Compare (S') with (T) to generate matches using “nearest neighbor” 
+        algorithm
+      - Compute error for every match (Euclidean distance)
+      - Apply scoring function and keep track of the best score
+
+# The above generic algorithm is implemented using following technique in
+  mapreduce:
+  1. For each pair of data point from source (S) and target (T) data points
+     define linear translation.
+  2. Distribute these translations evenly across all the mappers.
+  3. Every mapper applies input translation to source data points to generate S'.
+     - For every point in S' find “K nearest neighbors” in T with K = Size(T)
+     - Greedily pick a globally best match. Make sure every point from S' and T
+       are picked only once.
+     - Each time a match is picked, score is generated. Keep picking points till 
+       score is maximized.
+  4. Every mapper computes score by applying all translations one by one. Finally 
+     emits the best score.
+  5. Single reducer then computes the best score across all mappers and emits
+     matching points.
+
+# Main Classes:
+MapReduceStitchingDriver, MapReduceStitchingDriver, PointToPointTranslationMapper, 
+PointToPointTranslationReducer, TranslationMatchCalculator, KdTrees, 
+DataTransformation, ImageData
+
+# Comments:
+- The algorithm generates good matches with high score for right set of
+  transformations.
+- The algorithm is slow and the performance will get worse if the number of
+  points are doubled.
+- On AWS EMR cluster with 4 machines, it takes around 6 minutes to generate
+  results with 100K randomly sampled translations.
+
+
