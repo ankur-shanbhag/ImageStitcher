@@ -1,17 +1,22 @@
-##### INTRODUCTION #####
- 
+###############################################################################
+### INTRODUCTION
+###############################################################################
+
 This document is useful for developers to get started with existing features
 and understand basic operations supported by the system.
 The document also provides high level description of different stitching  
 algorithms implemented with some implementation details to help developers
 make changes or extend existing functionality.
-Lastly, the document briefly speaks about other stitching approaches that came
-up as a part of discussion with other team members.
 
+Lastly, the document briefly speaks about other stitching approaches and 
+optimization techniques that can be added to the existing system to improve
+running time and generated matches.
 
-### GETTING STARTED ###
+###############################################################################
+### GETTING STARTED
+###############################################################################
 
-1. Building the project
+## Building the project
 The shell script build.sh can be used to build the project and create a tarball
 of the project which can be shipped/deployed on any machine with required
 softwares.
@@ -135,7 +140,9 @@ softwares.
                                     Default: neu.nctracer.dm.cluster.DBSCANCluster
 
 
-### STITCHING ALGORITHMS IMPLEMENTED ##
+###############################################################################
+### STITCHING ALGORITHMS IMPLEMENTATION
+###############################################################################
 
 This project started of with an cluster based implementation but later it was
 found that point-to-point matching algorithm would perform better and thus we
@@ -176,7 +183,7 @@ progressed along.
    2. For each candidate transformation -
       - Apply tranformation to every point in S to generate S'
       - Greedily match every point in S' with available points from T
-      - Compare (S') with (T) to generate matches using “nearest neighbor” 
+      - Compare (S') with (T) to generate matches using “nearest neighbor”
         algorithm
       - Compute error for every match (Euclidean distance)
       - Apply scoring function and keep track of the best score
@@ -186,13 +193,13 @@ progressed along.
   1. For each pair of data point from source (S) and target (T) data points
      define linear translation.
   2. Distribute these translations evenly across all the mappers.
-  3. Every mapper applies input translation to source data points to generate S'.
+  3. Every mapper applies input translation to source data points to generate S'
      - For every point in S' find “K nearest neighbors” in T with K = Size(T)
      - Greedily pick a globally best match. Make sure every point from S' and T
        are picked only once.
-     - Each time a match is picked, score is generated. Keep picking points till 
+     - Each time a match is picked, score is generated. Keep picking points till
        score is maximized.
-  4. Every mapper computes score by applying all translations one by one. Finally 
+  4. Every mapper computes score by applying all translations one by one. Finally
      emits the best score.
   5. Single reducer then computes the best score across all mappers and emits
      matching points.
@@ -209,5 +216,54 @@ DataTransformation, ImageData
   points are doubled.
 - On AWS EMR cluster with 4 machines, it takes around 6 minutes to generate
   results with 100K randomly sampled translations.
+
+
+###############################################################################
+### FUTURE WORK
+###############################################################################
+
+Based on our observations and team discussions, below are few approaches
+to reduce the time complexity or improve matching accuracy of our existing
+point-to-point algorithm.
+Going ahead, one of the major goals would be to reduce the running time of the
+algorithm (less than a minute) for stitching 2 image stacks on single machine.
+
+# Approach 1:
+- One variation of the above approach would be to use a different transformation
+  to replace linear translation. One transformation that came up during
+  discussions was to use "rotation + translation" to improve matching accuracy
+  for 3D image stacks.
+- Probably, we might need to write another class similar to
+  TranslationMatchCalculator with a particular scoring function. This class can be
+  passed to the existing point-to-point algorithm using parameter
+  "match.calculator.class"
+
+# Approach 2:
+- As discussed earlier, point to point translation approach is slow. One way to
+  reduce time complexity is by using RANSAC (Random Sampling) technique to 
+  randomly select a set of points from source and target images to define
+  translation pairs and use hungarian algorithm instead of existing greedly
+  approach to detect matching points.
+- In our current brute force implementation, we define all pair translations
+  (around 4000K) which are applied to all the source data points for computing
+  matches.
+- RANSAC algorithm to define translations can significantly reduce overall
+  runtime of the algorithm.
+  
+- In the current implementation, the logic to define translations can be
+  found in the class "PointToPointTranslationDriver".
+  
+- To integrate hungarian algorithm, write another class similar to
+  TranslationMatchCalculator with a particular scoring function. This class can
+  be passed to the existing point-to-point algorithm using parameter
+  "match.calculator.class"
+  
+# Approach 3:
+- Usually the overlap between images will be found near the boundaries of the
+  image stacks. Thus we can prioritize selection of points near the boundaries
+  of the image stacks to define translations and keep moving inwards from the 
+  boundary. We stop as soon as we find a good match with a high score. This way
+  we do not predefine all translations, rather we only define a new translation
+  if the current translation does not find a good match.
 
 
